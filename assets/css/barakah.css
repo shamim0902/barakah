@@ -564,6 +564,42 @@
 /* Location pin SVG */
 .bk-root.bk-light .bk-location svg { stroke: #b89a30; }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   MODE TOGGLE BUTTON
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.bk-mode-toggle {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 5px 10px;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.65rem; font-weight: 600;
+  color: rgba(255,235,180,0.7);
+  letter-spacing: 0.04em;
+  transition: all 0.3s;
+  white-space: nowrap;
+  line-height: 1;
+}
+.bk-mode-toggle:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.25);
+}
+.bk-mode-toggle-icon { font-size: 0.85rem; line-height: 1; }
+
+/* Light mode toggle */
+.bk-root.bk-light .bk-mode-toggle {
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.12);
+  color: #6b6352;
+}
+.bk-root.bk-light .bk-mode-toggle:hover {
+  background: rgba(0,0,0,0.1);
+  border-color: rgba(0,0,0,0.2);
+}
+
 /* ── Responsive tweaks ────────────────────────────────────────────────────── */
 
 @media (max-width: 400px) {

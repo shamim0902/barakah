@@ -179,6 +179,10 @@
                 '<div class="bk-brand-name">Ramadan Times</div>' +
                 '<div class="bk-brand-ar">رمضان المبارك</div>' +
               '</div>' +
+              '<button class="bk-mode-toggle" id="bk-mode-toggle" title="Toggle light/dark mode" aria-label="Toggle light/dark mode">' +
+                '<span class="bk-mode-toggle-icon">' + (isLight ? "\uD83C\uDF19" : "\u2600\uFE0F") + '</span>' +
+                '<span class="bk-mode-toggle-label">' + (isLight ? "Dark" : "Light") + '</span>' +
+              '</button>' +
               '<div class="bk-day-badge">Day ' + ramadanDay + '</div>' +
             '</div>' +
 
@@ -276,6 +280,7 @@
     renderDua();
     renderDuaDots();
     bindDuaControls();
+    bindModeToggle(container);
 
     if (clockInterval) clearInterval(clockInterval);
     updateClock(container);
@@ -465,6 +470,50 @@
     if (btn) btn.addEventListener("click", nextDua);
   }
 
+  /* ── Mode toggle ─────────────────────────────────────────────────────────── */
+
+  var STORAGE_KEY = "barakah_mode";
+
+  function getStoredMode() {
+    try { return localStorage.getItem(STORAGE_KEY); } catch (e) { return null; }
+  }
+
+  function setStoredMode(mode) {
+    try { localStorage.setItem(STORAGE_KEY, mode); } catch (e) { /* silent */ }
+  }
+
+  function resolveMode(shortcodeDefault) {
+    return getStoredMode() || shortcodeDefault || "dark";
+  }
+
+  function bindModeToggle(container) {
+    var btn = document.getElementById("bk-mode-toggle");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      var root = container.querySelector(".bk-root");
+      if (!root) return;
+      var nowLight = root.classList.contains("bk-light");
+      var newMode  = nowLight ? "dark" : "light";
+
+      root.classList.toggle("bk-light", !nowLight);
+      container._bkMode = newMode;
+      setStoredMode(newMode);
+
+      /* Update button icon & label */
+      var icon  = btn.querySelector(".bk-mode-toggle-icon");
+      var label = btn.querySelector(".bk-mode-toggle-label");
+      if (icon)  icon.textContent  = newMode === "light" ? "\uD83C\uDF19" : "\u2600\uFE0F";
+      if (label) label.textContent = newMode === "light" ? "Dark" : "Light";
+
+      /* Start or stop stars */
+      if (newMode === "dark") {
+        initStars();
+      } else {
+        if (starsAnimId) { cancelAnimationFrame(starsAnimId); starsAnimId = null; }
+      }
+    });
+  }
+
   /* ── Boot ────────────────────────────────────────────────────────────────── */
 
   function init() {
@@ -473,7 +522,8 @@
     var city    = container.getAttribute("data-city")    || "Dhaka";
     var country = container.getAttribute("data-country") || "Bangladesh";
     var method  = container.getAttribute("data-method")  || "1";
-    var mode    = container.getAttribute("data-mode")    || "dark";
+    var shortcodeMode = container.getAttribute("data-mode") || "dark";
+    var mode = resolveMode(shortcodeMode);
     container._bkMode = mode;
     if (mode === "light") {
       var loading = container.querySelector(".bk-loading");
