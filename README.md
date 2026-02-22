@@ -1,4 +1,10 @@
 # Barakah – Ramadan Prayer Times
+<img width="1496" height="849" alt="image" src="https://github.com/user-attachments/assets/5a6fc305-8242-45e5-a13e-efd1ce20cee1" />
+
+
+Download <a href="https://github.com/shamim0902/barakah/releases/latest/download/barakah.zip" > Latest release </a> the latest release and upload into your WordPress. then use shortcode like `[barakah mode=light]`
+
+Choose your area and share greetings with your visitors.
 
 A beautiful, animated Ramadan prayer times widget for WordPress. Powered by the free [Aladhan API](https://aladhan.com/prayer-times-api) — no API key required.
 
