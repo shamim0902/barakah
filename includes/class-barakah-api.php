@@ -45,25 +45,24 @@ class Barakah_API {
 	 * @return array{ timings: array, date: array, error?: string }
 	 */
 	public function get_prayer_times( $city, $country, $date = '', $method = 1 ) {
-		if ( empty( $date ) ) {
-			$date = gmdate( 'd-m-Y' );
-		}
+		$today = gmdate( 'Y-m-d' );
 
 		$cache_hours = (int) get_option( 'barakah_cache_hours', 6 );
-		$cache_key   = 'barakah_times_' . sanitize_key( $city . '_' . $country . '_' . $date . '_' . $method );
+		$cache_key   = 'barakah_times_v2_' . sanitize_key( $city . '_' . $country . '_' . $today . '_' . $method );
 		$cached      = get_transient( $cache_key );
 
 		if ( false !== $cached && is_array( $cached ) ) {
 			return $cached;
 		}
 
+		/* No date in path — Aladhan uses the server's current date automatically */
 		$url = add_query_arg(
 			array(
 				'city'    => $city,
 				'country' => $country,
 				'method'  => $method,
 			),
-			self::ALADHAN_BASE . '/timingsByCity/' . $date
+			self::ALADHAN_BASE . '/timingsByCity'
 		);
 
 		$response = wp_remote_get( $url, array(

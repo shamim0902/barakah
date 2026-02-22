@@ -106,9 +106,11 @@
 
   /* ── State ───────────────────────────────────────────────────────────────── */
 
-  var duaIndex     = 0;
+  var duaIndex      = 0;
   var clockInterval = null;
-  var starsAnimId  = null;
+  var starsAnimId   = null;
+  var monthCache    = null;
+  var monthCacheKey = null;
 
   /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -143,7 +145,7 @@
       .then(function (res) { return res.json(); })
       .then(function (json) {
         if (json.code === 200 && json.data) {
-          renderWidget(container, json.data, city, country);
+          renderWidget(container, json.data, city, country, method);
         } else {
           showError(container, "Could not load prayer times. Please verify the city and country in Barakah settings.");
         }
@@ -171,7 +173,7 @@
 
   /* ── Main render ─────────────────────────────────────────────────────────── */
 
-  function renderWidget(container, data, city, country) {
+  function renderWidget(container, data, city, country, method) {
     var timings    = data.timings;
     var hijri      = data.date.hijri;
     var gregorian  = data.date.gregorian;
@@ -275,7 +277,10 @@
 
           /* ── Full Prayer Times ── */
           '<div class="bk-prayers bk-anim bk-d3">' +
-            '<div class="bk-section-head"><span>🕌</span> Prayer Times Today</div>' +
+            '<div class="bk-section-head">' +
+              '<span>🕌</span> Prayer Times Today' +
+              '<button class="bk-month-btn" id="bk-month-btn" title="View full month prayer times">📅 Month</button>' +
+            '</div>' +
             prayerRows +
           '</div>' +
 
@@ -319,14 +324,20 @@
         '</div>' + /* bk-body */
       '</div>';   /* bk-root */
 
-    /* Store prayers on container for clock updates */
+    /* Store prayers & hijri info on container */
     container._bkPrayers = prayers;
+    /* Extract Hijri year/month from hijri.date ("DD-MM-YYYY") for reliability */
+    var hDateParts = (hijri.date || "").split("-");
+    container._bkHijriYear  = hDateParts.length === 3 ? parseInt(hDateParts[2], 10) : parseInt(hijri.year, 10);
+    container._bkHijriMonth = hDateParts.length === 3 ? parseInt(hDateParts[1], 10) : parseInt(hijri.month.number, 10);
+    container._bkHijriMonthName = (hijri.month && hijri.month.en) ? hijri.month.en : "";
 
     if (!isLight) initStars();
     renderDua();
     renderDuaDots();
     bindDuaControls();
     bindModeToggle(container);
+    bindMonthBtn(container, city, country, method);
 
     if (clockInterval) clearInterval(clockInterval);
     updateClock(container);
@@ -607,6 +618,155 @@
     });
   }
 
+  /* ── Full Month Modal ───────────────────────────────────────────────────── */
+
+  function openMonthModal(city, country, method, isLight, hijriYear) {
+    var existing = document.getElementById("bk-month-overlay");
+    if (existing) existing.remove();
+
+    var now   = new Date();
+    var year  = (hijriYear > 1000) ? hijriYear : 1447; /* fallback to 1447 AH */
+    var month = 9; /* Ramadan is always Hijri month 9 */
+
+    /* Today's date in DD-MM-YYYY — matches Aladhan's gregorian.date field */
+    var todayStr = pad(now.getDate()) + "-" + pad(now.getMonth() + 1) + "-" + now.getFullYear();
+
+    var cacheKey     = city + "|" + country + "|" + method + "|H|" + year + "|9";
+    var displayTitle = "Ramadan " + year + " AH";
+
+    var overlay = document.createElement("div");
+    overlay.id        = "bk-month-overlay";
+    overlay.className = "bk-month-overlay" + (isLight ? " bk-light-modal" : "");
+    overlay.innerHTML =
+      '<div class="bk-month-panel">' +
+        '<div class="bk-month-head">' +
+          '<div class="bk-month-title">\uD83D\uDCC5 ' + displayTitle +
+            '<span>\u00B7 ' + escHtml(city) + '</span>' +
+          '</div>' +
+          '<button class="bk-month-close" id="bk-month-close" aria-label="Close">\u2715</button>' +
+        '</div>' +
+        '<div class="bk-month-scroll" id="bk-month-scroll">' +
+          '<div class="bk-month-loading">\uD83C\uDF19 Loading prayer times\u2026</div>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    document.getElementById("bk-month-close").addEventListener("click", closeMonthModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeMonthModal(); });
+    document.addEventListener("keydown", onMonthEsc);
+
+    if (monthCache && monthCacheKey === cacheKey) {
+      renderMonthContent(todayStr, monthCache);
+      return;
+    }
+
+    var url =
+      "https://api.aladhan.com/v1/hijriCalendarByCity/" + year + "/9" +
+      "?city="    + encodeURIComponent(city)    +
+      "&country=" + encodeURIComponent(country) +
+      "&method="  + encodeURIComponent(method);
+
+    fetch(url)
+      .then(function (res) { return res.json(); })
+      .then(function (json) {
+        if (json.code === 200 && json.data) {
+          monthCache    = json.data;
+          monthCacheKey = cacheKey;
+          renderMonthContent(todayStr, json.data);
+        } else {
+          var scr = document.getElementById("bk-month-scroll");
+          if (scr) scr.innerHTML = '<div class="bk-month-loading">Could not load monthly data.</div>';
+        }
+      })
+      .catch(function () {
+        var scr = document.getElementById("bk-month-scroll");
+        if (scr) scr.innerHTML = '<div class="bk-month-loading">Network error — could not reach api.aladhan.com.</div>';
+      });
+  }
+
+  function renderMonthContent(todayStr, data) {
+    var scr = document.getElementById("bk-month-scroll");
+    if (!scr) return;
+
+    /* Update title from first day's Hijri year (always Ramadan) */
+    var titleEl = document.querySelector("#bk-month-overlay .bk-month-title");
+    if (titleEl && data.length > 0) {
+      var firstHijri = data[0].date.hijri;
+      if (firstHijri && firstHijri.year) {
+        var citySpan = titleEl.querySelector("span");
+        var cityHtml = citySpan ? citySpan.outerHTML : "";
+        titleEl.innerHTML = "\uD83D\uDCC5 Ramadan " + firstHijri.year + " AH " + cityHtml;
+      }
+    }
+
+    var rows = data.map(function (day) {
+      var greg      = day.date.gregorian;
+      var hijri     = day.date.hijri;
+      var t         = day.timings;
+      var isToday   = greg.date === todayStr;
+      var hijriDay   = parseInt(hijri.day, 10);
+      var weekday    = greg.weekday ? greg.weekday.en.slice(0, 3) : "";
+      var gregMonth  = greg.month ? greg.month.en.slice(0, 3) : "";
+      var gregDay    = pad(parseInt(greg.day, 10));
+      var hijriMonth = (hijri.month && hijri.month.en) ? hijri.month.en : "";
+      /* Date cell: Gregorian line + Hijri line stacked */
+      var dateTd =
+        '<span class="bk-mdate-greg">' + weekday + ' ' + gregDay + ' ' + gregMonth + '</span>' +
+        '<span class="bk-mdate-hijri">' + hijriDay + ' ' + escHtml(hijriMonth) + '</span>';
+      return (
+        '<tr class="' + (isToday ? "bk-mrow-today" : "") + '">' +
+          '<td>' + dateTd + '</td>' +
+          '<td class="bk-mcell-fajr">'    + formatTime12(t.Fajr)    + '</td>' +
+          '<td>'                           + formatTime12(t.Dhuhr)   + '</td>' +
+          '<td>'                           + formatTime12(t.Asr)     + '</td>' +
+          '<td class="bk-mcell-maghrib">' + formatTime12(t.Maghrib) + '</td>' +
+          '<td>'                           + formatTime12(t.Isha)    + '</td>' +
+        '</tr>'
+      );
+    }).join("");
+
+    scr.innerHTML =
+      '<table class="bk-month-table">' +
+        '<thead><tr>' +
+          '<th>Date</th>' +
+          '<th>\uD83C\uDF19 Fajr</th>' +
+          '<th>\u2600\uFE0F Dhuhr</th>' +
+          '<th>Asr</th>' +
+          '<th>\uD83C\uDF07 Maghrib</th>' +
+          '<th>\uD83C\uDF03 Isha</th>' +
+        '</tr></thead>' +
+        '<tbody>' + rows + '</tbody>' +
+      '</table>';
+
+    var todayRow = scr.querySelector(".bk-mrow-today");
+    if (todayRow) {
+      setTimeout(function () {
+        todayRow.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 80);
+    }
+  }
+
+  function closeMonthModal() {
+    var overlay = document.getElementById("bk-month-overlay");
+    if (overlay) overlay.remove();
+    document.removeEventListener("keydown", onMonthEsc);
+  }
+
+  function onMonthEsc(e) {
+    if (e.key === "Escape") closeMonthModal();
+  }
+
+  function bindMonthBtn(container, city, country, method) {
+    var btn = document.getElementById("bk-month-btn");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      /* Always show Ramadan (Hijri month 9) of the current Hijri year */
+      var hijriYear = container._bkHijriYear || new Date().getFullYear();
+      openMonthModal(city, country, method, container._bkMode === "light", hijriYear);
+    });
+  }
+
   /* ── Boot ────────────────────────────────────────────────────────────────── */
 
   function init() {
@@ -625,7 +785,7 @@
 
     /* Use server-side cached data if available, otherwise fallback to client fetch */
     if (serverData && serverData.hasData && serverData.timings && serverData.date) {
-      renderWidget(container, { timings: serverData.timings, date: serverData.date }, city, country);
+      renderWidget(container, { timings: serverData.timings, date: serverData.date }, city, country, method);
     } else {
       fetchPrayerTimes(city, country, method, container);
     }
