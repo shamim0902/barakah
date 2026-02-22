@@ -58,6 +58,52 @@
     },
   ];
 
+  /* ── Server-side data from PHP (via wp_localize_script) ────────────────── */
+
+  var serverData  = (typeof barakahData !== "undefined") ? barakahData : null;
+  var BANGLA_DUAS = (serverData && serverData.banglaDuas) ? serverData.banglaDuas : [];
+
+  /* ── Merge English + Bangla duas ─────────────────────────────────────── */
+
+  (function mergeDuas() {
+    if (!BANGLA_DUAS.length) return;
+
+    function norm(s) { return (s || "").replace(/\s+/g, " ").trim(); }
+
+    var banglaMap = {};
+    var i, j, k, key;
+    for (i = 0; i < BANGLA_DUAS.length; i++) {
+      key = norm(BANGLA_DUAS[i].arabic);
+      if (key) banglaMap[key] = BANGLA_DUAS[i];
+    }
+
+    var matched = {};
+    for (j = 0; j < DUAS.length; j++) {
+      key = norm(DUAS[j].arabic);
+      if (banglaMap[key]) {
+        DUAS[j].bangla_pronunciation = banglaMap[key].bangla_pronunciation || "";
+        DUAS[j].bangla_meaning       = banglaMap[key].bangla_meaning || "";
+        DUAS[j].category             = banglaMap[key].category || "";
+        matched[key] = true;
+      }
+    }
+
+    for (k = 0; k < BANGLA_DUAS.length; k++) {
+      key = norm(BANGLA_DUAS[k].arabic);
+      if (!matched[key]) {
+        DUAS.push({
+          arabic:               BANGLA_DUAS[k].arabic || "",
+          transliteration:      "",
+          translation:          "",
+          source:               BANGLA_DUAS[k].category || "",
+          bangla_pronunciation: BANGLA_DUAS[k].bangla_pronunciation || "",
+          bangla_meaning:       BANGLA_DUAS[k].bangla_meaning || "",
+          category:             BANGLA_DUAS[k].category || "",
+        });
+      }
+    }
+  })();
+
   /* ── State ───────────────────────────────────────────────────────────────── */
 
   var duaIndex     = 0;
@@ -424,17 +470,64 @@
     var tEl = document.getElementById("bk-dua-trans");
     var mEl = document.getElementById("bk-dua-meaning");
     var sEl = document.getElementById("bk-dua-source");
+
     if (aEl) aEl.textContent = d.arabic;
-    if (tEl) tEl.textContent = d.transliteration;
-    if (mEl) mEl.textContent = "\u201c" + d.translation + "\u201d";
-    if (sEl) sEl.textContent = d.source;
+
+    /* Transliteration (English) */
+    if (tEl) {
+      tEl.textContent = d.transliteration || "";
+      tEl.style.display = d.transliteration ? "" : "none";
+    }
+
+    /* Meaning block: English translation + Bangla pronunciation + Bangla meaning */
+    if (mEl) {
+      mEl.innerHTML = "";
+      if (d.translation) {
+        var enDiv = document.createElement("div");
+        enDiv.textContent = "\u201c" + d.translation + "\u201d";
+        enDiv.style.marginBottom = (d.bangla_pronunciation || d.bangla_meaning) ? "6px" : "0";
+        mEl.appendChild(enDiv);
+      }
+      if (d.bangla_pronunciation) {
+        var bpDiv = document.createElement("div");
+        bpDiv.textContent = d.bangla_pronunciation;
+        bpDiv.className = "bk-dua-bangla-pron";
+        mEl.appendChild(bpDiv);
+      }
+      if (d.bangla_meaning) {
+        var bmDiv = document.createElement("div");
+        bmDiv.textContent = d.bangla_meaning;
+        bmDiv.className = "bk-dua-bangla-meaning";
+        mEl.appendChild(bmDiv);
+      }
+      mEl.style.display = (d.translation || d.bangla_pronunciation || d.bangla_meaning) ? "" : "none";
+    }
+
+    /* Source / category */
+    if (sEl) {
+      var src = d.source || d.category || "";
+      sEl.textContent = src;
+      if (sEl.parentElement) sEl.parentElement.style.display = src ? "" : "none";
+    }
   }
 
   function renderDuaDots() {
     var wrap = document.getElementById("bk-dua-dots");
     if (!wrap) return;
     wrap.innerHTML = "";
-    for (var i = 0; i < DUAS.length; i++) {
+
+    var total = DUAS.length;
+    var maxVisible = 8;
+    var start = 0;
+    var end = total;
+
+    if (total > maxVisible) {
+      var half = Math.floor(maxVisible / 2);
+      start = Math.max(0, Math.min(duaIndex - half, total - maxVisible));
+      end = Math.min(start + maxVisible, total);
+    }
+
+    for (var i = start; i < end; i++) {
       (function (idx) {
         var dot = document.createElement("div");
         dot.className = "bk-dot" + (idx === duaIndex ? " bk-dot-on" : "");
@@ -529,7 +622,13 @@
       var loading = container.querySelector(".bk-loading");
       if (loading) loading.classList.add("bk-light");
     }
-    fetchPrayerTimes(city, country, method, container);
+
+    /* Use server-side cached data if available, otherwise fallback to client fetch */
+    if (serverData && serverData.hasData && serverData.timings && serverData.date) {
+      renderWidget(container, { timings: serverData.timings, date: serverData.date }, city, country);
+    } else {
+      fetchPrayerTimes(city, country, method, container);
+    }
   }
 
   if (document.readyState === "loading") {

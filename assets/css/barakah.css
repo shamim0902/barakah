@@ -340,6 +340,13 @@
 .bk-dua-meaning {
   color: rgba(255,235,180,0.88); font-size: 0.8rem; line-height: 1.6; margin-bottom: 8px;
 }
+.bk-dua-bangla-pron {
+  color: rgba(255,235,180,0.6); font-size: 0.76rem;
+  font-style: italic; line-height: 1.5; margin-bottom: 4px;
+}
+.bk-dua-bangla-meaning {
+  color: rgba(255,235,180,0.82); font-size: 0.78rem; line-height: 1.6;
+}
 .bk-dua-source {
   color: rgba(255,235,180,0.35); font-size: 0.65rem; margin-top: 4px;
 }
@@ -537,9 +544,11 @@
   background: rgba(184,154,48,0.06);
   border-color: rgba(184,154,48,0.12);
 }
-.bk-root.bk-light .bk-dua-trans   { color: #6b6352; }
-.bk-root.bk-light .bk-dua-meaning { color: #2d2d44; }
-.bk-root.bk-light .bk-dua-source  { color: #9a9080; }
+.bk-root.bk-light .bk-dua-trans          { color: #6b6352; }
+.bk-root.bk-light .bk-dua-meaning        { color: #2d2d44; }
+.bk-root.bk-light .bk-dua-bangla-pron    { color: #6b6352; }
+.bk-root.bk-light .bk-dua-bangla-meaning { color: #3a3a50; }
+.bk-root.bk-light .bk-dua-source         { color: #9a9080; }
 
 .bk-root.bk-light .bk-dua-divider::before,
 .bk-root.bk-light .bk-dua-divider::after { background: rgba(0,0,0,0.08); }

@@ -19,6 +19,7 @@ define( 'BARAKAH_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 
 /* ── Includes ────────────────────────────────────────────────────────────── */
 
+require_once BARAKAH_PLUGIN_PATH . 'includes/class-barakah-api.php';
 require_once BARAKAH_PLUGIN_PATH . 'includes/admin.php';
 require_once BARAKAH_PLUGIN_PATH . 'includes/shortcode.php';
 
@@ -47,9 +48,10 @@ add_action( 'wp_enqueue_scripts', 'barakah_enqueue_frontend_assets' );
 register_activation_hook( __FILE__, 'barakah_activate' );
 function barakah_activate() {
     $defaults = [
-        'barakah_city'    => 'Dhaka',
-        'barakah_country' => 'Bangladesh',
-        'barakah_method'  => '1',
+        'barakah_city'        => 'Dhaka',
+        'barakah_country'     => 'Bangladesh',
+        'barakah_method'      => '1',
+        'barakah_cache_hours' => 6,
     ];
     foreach ( $defaults as $key => $value ) {
         if ( get_option( $key ) === false ) {
@@ -57,3 +59,20 @@ function barakah_activate() {
         }
     }
 }
+
+/* ── Deactivation: flush cached data ────────────────────────────────────── */
+
+register_deactivation_hook( __FILE__, 'barakah_deactivate' );
+function barakah_deactivate() {
+    Barakah_API::flush_cache();
+}
+
+/* ── Flush cache when settings change ───────────────────────────────────── */
+
+function barakah_flush_cache_on_save() {
+    Barakah_API::flush_cache();
+}
+add_action( 'update_option_barakah_city',        'barakah_flush_cache_on_save' );
+add_action( 'update_option_barakah_country',     'barakah_flush_cache_on_save' );
+add_action( 'update_option_barakah_method',      'barakah_flush_cache_on_save' );
+add_action( 'update_option_barakah_cache_hours', 'barakah_flush_cache_on_save' );

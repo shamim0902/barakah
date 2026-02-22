@@ -63,21 +63,31 @@ function barakah_settings_page() {
                 update_option( 'barakah_city',    $city );
                 update_option( 'barakah_country', $country );
                 update_option( 'barakah_method',  $method );
+
+                $cache_hours = (int) sanitize_text_field( wp_unslash( $_POST['barakah_cache_hours'] ?? '6' ) );
+                $cache_hours = max( 1, min( 168, $cache_hours ) );
+                update_option( 'barakah_cache_hours', $cache_hours );
+
+                Barakah_API::flush_cache();
                 $saved = true;
             }
         }
     }
 
-    $city    = get_option( 'barakah_city',    'Dhaka' );
-    $country = get_option( 'barakah_country', 'Bangladesh' );
-    $method  = get_option( 'barakah_method',  '1' );
-    $methods = barakah_get_methods();
+    $city        = get_option( 'barakah_city',        'Dhaka' );
+    $country     = get_option( 'barakah_country',     'Bangladesh' );
+    $method      = get_option( 'barakah_method',      '1' );
+    $cache_hours = (int) get_option( 'barakah_cache_hours', 6 );
+    $methods     = barakah_get_methods();
     ?>
     <style>
         /* ── Barakah Admin Styles ── */
         .bk-admin-wrap {
             max-width: 820px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .bk-admin-wrap .notice.notice-error {
+            display: none;
         }
         .bk-admin-hero {
             background: linear-gradient(135deg, #0d0d2b 0%, #1a0a3e 100%);
@@ -144,6 +154,7 @@ function barakah_settings_page() {
             margin-bottom: 6px;
         }
         .bk-field input[type="text"],
+        .bk-field input[type="number"],
         .bk-field select {
             width: 100%;
             max-width: 420px;
@@ -156,6 +167,7 @@ function barakah_settings_page() {
             background: #fafafa;
         }
         .bk-field input[type="text"]:focus,
+        .bk-field input[type="number"]:focus,
         .bk-field select:focus {
             border-color: #6B8CDE;
             background: #fff;
@@ -307,6 +319,28 @@ function barakah_settings_page() {
                     <span class="bk-method-tag">Europe → Method 1 or 12</span>
                     <span class="bk-method-tag">Turkey → Method 13</span>
                     <span class="bk-method-tag">Egypt → Method 3</span>
+                </div>
+            </div>
+
+            <!-- Cache Settings -->
+            <div class="bk-card-wrap">
+                <h2><span class="dashicons dashicons-performance"></span> Cache Settings</h2>
+                <div class="bk-field">
+                    <label for="barakah_cache_hours">Cache Duration (hours)</label>
+                    <input
+                        type="number"
+                        id="barakah_cache_hours"
+                        name="barakah_cache_hours"
+                        value="<?php echo esc_attr( $cache_hours ); ?>"
+                        min="1"
+                        max="168"
+                        style="max-width: 160px;"
+                    />
+                    <div class="description">
+                        Prayer times are cached server-side to reduce API calls.
+                        Range: 1–168 hours (1 hour to 1 week). Default: 6 hours.
+                        Cache is automatically cleared when settings are saved.
+                    </div>
                 </div>
             </div>
 
