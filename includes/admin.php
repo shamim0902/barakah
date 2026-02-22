@@ -71,6 +71,9 @@ function barakah_settings_page() {
                 $two_column = isset( $_POST['barakah_two_column'] ) ? '1' : '0';
                 update_option( 'barakah_two_column', $two_column );
 
+                $allow_location_change = isset( $_POST['barakah_allow_location_change'] ) ? '1' : '0';
+                update_option( 'barakah_allow_location_change', $allow_location_change );
+
                 $header_greeting = sanitize_text_field( wp_unslash( $_POST['barakah_header_greeting'] ?? '' ) );
                 update_option( 'barakah_header_greeting', $header_greeting );
 
@@ -88,6 +91,7 @@ function barakah_settings_page() {
     $method      = get_option( 'barakah_method',      '1' );
     $cache_hours = (int) get_option( 'barakah_cache_hours', 6 );
     $two_column  = get_option( 'barakah_two_column', '0' );
+    $allow_location_change = get_option( 'barakah_allow_location_change', '0' );
     $header_greeting = get_option( 'barakah_header_greeting', '' );
     $greeting        = get_option( 'barakah_greeting', '' );
     $methods     = barakah_get_methods();
@@ -367,6 +371,16 @@ function barakah_settings_page() {
                     <div class="description">
                         On large screens (&ge;768px), prayer times and duas display side by side.
                         Mobile devices always use single column.
+                    </div>
+                </div>
+                <div class="bk-field" style="margin-top: 12px;">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" name="barakah_allow_location_change" value="1" <?php checked( $allow_location_change, '1' ); ?> />
+                        Allow Location Change
+                    </label>
+                    <div class="description">
+                        When enabled, visitors can click the location bar to change city and country.
+                        Prayer times will be re-fetched for the new location.
                     </div>
                 </div>
             </div>

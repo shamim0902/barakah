@@ -39,8 +39,9 @@ function barakah_render_shortcode( $atts ) {
         'date'       => isset( $data['date'] ) ? $data['date'] : [],
         'banglaDuas' => $bangla_duas,
         'hasData'    => $has_server_data,
-        'headerGreeting' => get_option( 'barakah_header_greeting', '' ),
-        'greeting'       => get_option( 'barakah_greeting', '' ),
+        'headerGreeting'      => get_option( 'barakah_header_greeting', '' ),
+        'greeting'            => get_option( 'barakah_greeting', '' ),
+        'allowLocationChange' => get_option( 'barakah_allow_location_change', '0' ),
     ] );
 
     ob_start();

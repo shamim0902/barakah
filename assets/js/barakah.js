@@ -111,6 +111,7 @@
   var starsAnimId   = null;
   var monthCache    = null;
   var monthCacheKey = null;
+  var allowLocationChange = (serverData && serverData.allowLocationChange === "1");
 
   /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -217,17 +218,18 @@
       '<div class="bk-main-cards bk-anim bk-d1">' +
         '<div class="bk-card bk-card-sehri" id="bk-card-sehri">' +
           '<div class="bk-card-emoji">🌙</div>' +
-          '<div class="bk-card-label">Sehri</div>' +
+          '<div class="bk-card-label">Sehri <span class="bk-card-location">' + escHtml(city) + '</span></div>' +
           '<div class="bk-card-ar">الفجر</div>' +
           '<div class="bk-card-time">' + formatTime12(timings.Fajr) + '</div>' +
           '<div class="bk-badge bk-badge-blue" id="bk-badge-sehri">–</div>' +
         '</div>' +
         '<div class="bk-card bk-card-iftar" id="bk-card-iftar">' +
           '<div class="bk-card-emoji">🌅</div>' +
-          '<div class="bk-card-label">Iftar</div>' +
+          '<div class="bk-card-label">Iftar <span class="bk-card-location">' + escHtml(city) + '</span></div>' +
           '<div class="bk-card-ar">المغرب</div>' +
           '<div class="bk-card-time">' + formatTime12(timings.Maghrib) + '</div>' +
           '<div class="bk-badge bk-badge-orange" id="bk-badge-iftar">–</div>' +
+          '<button class="bk-month-btn bk-other-days-btn" id="bk-other-days-btn" title="View upcoming days">\uD83D\uDCC5</button>' +
         '</div>' +
       '</div>' +
 
@@ -248,7 +250,6 @@
       '<div class="bk-prayers bk-anim bk-d3">' +
         '<div class="bk-section-head">' +
           '<span>🕌</span> Prayer Times Today' +
-          '<button class="bk-month-btn" id="bk-month-btn" title="View full month prayer times">📅 Month</button>' +
         '</div>' +
         prayerRows +
       '</div>';
@@ -324,7 +325,8 @@
               '<div class="bk-day-badge">Day ' + ramadanDay + '</div>' +
             '</div>' +
 
-            '<div class="bk-location">' +
+            '<div class="bk-location' + (allowLocationChange ? ' bk-location-active' : '') + '"' +
+              (allowLocationChange ? ' title="Click to change location"' : '') + '>' +
               '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#F5C842" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
               escHtml(city) + ', ' + escHtml(country) +
               '<span class="bk-sep">·</span>' + dateLabel +
@@ -365,6 +367,7 @@
     bindDuaControls();
     bindModeToggle(container);
     bindMonthBtn(container, city, country, method);
+    bindLocationChange(container, method);
 
     if (clockInterval) clearInterval(clockInterval);
     updateClock(container);
@@ -785,13 +788,138 @@
   }
 
   function bindMonthBtn(container, city, country, method) {
-    var btn = document.getElementById("bk-month-btn");
+    var btn = document.getElementById("bk-other-days-btn");
     if (!btn) return;
     btn.addEventListener("click", function () {
-      /* Always show Ramadan (Hijri month 9) of the current Hijri year */
       var hijriYear = container._bkHijriYear || new Date().getFullYear();
       openMonthModal(city, country, method, container._bkMode === "light", hijriYear);
     });
+  }
+
+  /* ── Location Change Modal ─────────────────────────────────────────────── */
+
+  function bindLocationChange(container, method) {
+    if (!allowLocationChange) return;
+    var locationEl = container.querySelector(".bk-location");
+    if (!locationEl) return;
+    locationEl.addEventListener("click", function () {
+      openLocationModal(container, method);
+    });
+  }
+
+  function openLocationModal(container, method) {
+    var existing = document.getElementById("bk-location-overlay");
+    if (existing) existing.remove();
+
+    var isLight = container._bkMode === "light";
+
+    var overlay = document.createElement("div");
+    overlay.id = "bk-location-overlay";
+    overlay.className = "bk-location-overlay" + (isLight ? " bk-light-modal" : "");
+    overlay.innerHTML =
+      '<div class="bk-location-panel">' +
+        '<div class="bk-location-head">' +
+          '<div class="bk-location-title">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+            ' Change Location' +
+          '</div>' +
+          '<button class="bk-month-close" id="bk-location-close" aria-label="Close">\u2715</button>' +
+        '</div>' +
+        '<div class="bk-location-body">' +
+          '<div class="bk-location-field">' +
+            '<label for="bk-loc-city">City</label>' +
+            '<input type="text" id="bk-loc-city" placeholder="e.g. London, Karachi, Istanbul" />' +
+          '</div>' +
+          '<div class="bk-location-field">' +
+            '<label for="bk-loc-country">Country</label>' +
+            '<input type="text" id="bk-loc-country" placeholder="e.g. UK, Pakistan, Turkey" />' +
+          '</div>' +
+          '<div class="bk-location-error" id="bk-location-error"></div>' +
+          '<button class="bk-location-submit" id="bk-location-submit">Get Prayer Times</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+
+    /* Close handlers */
+    document.getElementById("bk-location-close").addEventListener("click", closeLocationModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeLocationModal(); });
+    document.addEventListener("keydown", onLocationEsc);
+
+    /* Focus city input */
+    var cityInput = document.getElementById("bk-loc-city");
+    if (cityInput) cityInput.focus();
+
+    /* Submit handler */
+    document.getElementById("bk-location-submit").addEventListener("click", function () {
+      var newCity    = (document.getElementById("bk-loc-city").value || "").trim();
+      var newCountry = (document.getElementById("bk-loc-country").value || "").trim();
+      var errorEl    = document.getElementById("bk-location-error");
+
+      if (!newCity || !newCountry) {
+        if (errorEl) { errorEl.textContent = "Please enter both city and country."; errorEl.style.display = "block"; }
+        return;
+      }
+
+      /* Hide error, show loading */
+      if (errorEl) errorEl.style.display = "none";
+      var btn = document.getElementById("bk-location-submit");
+      var originalText = btn.textContent;
+      btn.textContent = "Loading\u2026";
+      btn.disabled = true;
+
+      var url =
+        "https://api.aladhan.com/v1/timingsByCity" +
+        "?city="    + encodeURIComponent(newCity) +
+        "&country=" + encodeURIComponent(newCountry) +
+        "&method="  + encodeURIComponent(method);
+
+      fetch(url)
+        .then(function (res) {
+          if (!res.ok && res.status !== 400) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function (json) {
+          if (json.code === 200 && json.data && json.data.timings) {
+            closeLocationModal();
+            container.setAttribute("data-city", newCity);
+            container.setAttribute("data-country", newCountry);
+            /* Clear month cache so it refetches for new location */
+            monthCache = null;
+            monthCacheKey = null;
+            renderWidget(container, json.data, newCity, newCountry, method);
+          } else {
+            /* Use API error message when available (e.g. "Unable to geocode address: ...") */
+            var msg = (typeof json.data === "string" && json.data)
+              ? json.data
+              : "Could not find prayer times for \"" + newCity + ", " + newCountry + "\". Please check the spelling.";
+            if (errorEl) { errorEl.textContent = msg; errorEl.style.display = "block"; }
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }
+        })
+        .catch(function () {
+          if (errorEl) { errorEl.textContent = "Network error — could not reach the prayer times API. Please try again."; errorEl.style.display = "block"; }
+          btn.textContent = originalText;
+          btn.disabled = false;
+        });
+    });
+
+    /* Enter key support */
+    var countryInput = document.getElementById("bk-loc-country");
+    function onEnter(e) { if (e.key === "Enter") document.getElementById("bk-location-submit").click(); }
+    if (cityInput)    cityInput.addEventListener("keydown", onEnter);
+    if (countryInput) countryInput.addEventListener("keydown", onEnter);
+  }
+
+  function closeLocationModal() {
+    var overlay = document.getElementById("bk-location-overlay");
+    if (overlay) overlay.remove();
+    document.removeEventListener("keydown", onLocationEsc);
+  }
+
+  function onLocationEsc(e) {
+    if (e.key === "Escape") closeLocationModal();
   }
 
   /* ── Boot ────────────────────────────────────────────────────────────────── */

@@ -139,6 +139,19 @@
 }
 .bk-sep { opacity: 0.4; margin: 0 4px; }
 
+/* Clickable location (when admin allows change) */
+.bk-location-active {
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  transition: background 0.2s, color 0.2s;
+}
+.bk-location-active:hover {
+  background: rgba(245,200,66,0.1);
+  color: rgba(255,235,180,0.8);
+}
+
 .bk-clock {
   font-weight: 700; font-size: 2.4rem; color: #fff;
   letter-spacing: 0.06em; font-variant-numeric: tabular-nums; line-height: 1.1;
@@ -214,6 +227,16 @@
 }
 .bk-badge-blue   { background: rgba(107,140,222,0.2); border: 1px solid rgba(107,140,222,0.35); color: #8AAAE8; }
 .bk-badge-orange { background: rgba(255,140,66,0.2);  border: 1px solid rgba(255,140,66,0.35);  color: #FFB07A; }
+
+/* Location label inside Sehri/Iftar cards */
+.bk-card-location {
+  font-size: 0.65rem; color: rgba(255,235,180,0.45);
+  margin-left: 3px; letter-spacing: 0.04em;
+}
+.bk-root.bk-light .bk-card-location { color: rgba(80,70,50,0.5); }
+
+/* "Other days" button inside Iftar card */
+.bk-other-days-btn { margin-top: 8px; margin-left: 10px; width: auto; display: inline-block; }
 
 /* ── Countdown banner ─────────────────────────────────────────────────────── */
 
@@ -463,6 +486,7 @@
 }
 
 .bk-root.bk-light .bk-location { color: #5a5548; }
+.bk-root.bk-light .bk-location-active:hover { background: rgba(154,128,32,0.08); color: #3a3528; }
 .bk-root.bk-light .bk-clock    { color: #111122; }
 .bk-root.bk-light .bk-hijri    { color: #6a6040; }
 .bk-root.bk-light .bk-header-kareem   { color: #8a8070; }
@@ -881,6 +905,125 @@
   background: rgba(154,128,32,0.12);
   border-color: rgba(154,128,32,0.25);
   color: #7a6518;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LOCATION CHANGE MODAL
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.bk-location-overlay {
+  position: fixed; inset: 0; z-index: 999999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(5px);
+  padding: 16px;
+  animation: bkFadeIn 0.22s ease;
+}
+
+.bk-location-panel {
+  background: linear-gradient(160deg, #141435 0%, #1e1048 100%);
+  border: 1px solid rgba(245,200,66,0.18);
+  border-radius: 16px;
+  width: 100%; max-width: 360px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  animation: bkSlideUp 0.28s ease;
+  font-family: 'Nunito', sans-serif;
+}
+
+.bk-location-head {
+  padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  gap: 10px;
+}
+
+.bk-location-title {
+  color: #F5C842; font-weight: 700; font-size: 0.88rem;
+  letter-spacing: 0.02em;
+  display: flex; align-items: center; gap: 6px;
+}
+
+.bk-location-body {
+  padding: 18px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+.bk-location-field label {
+  display: block;
+  color: rgba(255,235,180,0.55);
+  font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 5px;
+}
+
+.bk-location-field input {
+  width: 100%; padding: 9px 13px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px; font-size: 0.85rem;
+  background: rgba(255,255,255,0.06);
+  color: #fff; font-family: 'Nunito', sans-serif;
+  outline: none; transition: border-color 0.2s, background 0.2s;
+  box-sizing: border-box;
+}
+.bk-location-field input::placeholder { color: rgba(255,235,180,0.25); }
+.bk-location-field input:focus {
+  border-color: rgba(245,200,66,0.4);
+  background: rgba(255,255,255,0.08);
+}
+
+.bk-location-error {
+  display: none; color: #e74c3c;
+  font-size: 0.75rem; padding: 0; margin: -4px 0;
+}
+
+.bk-location-submit {
+  width: 100%; padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(245,200,66,0.2), rgba(245,200,66,0.1));
+  border: 1px solid rgba(245,200,66,0.35);
+  border-radius: 10px;
+  color: #F5C842; font-size: 0.85rem; font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+.bk-location-submit:hover {
+  background: linear-gradient(135deg, rgba(245,200,66,0.3), rgba(245,200,66,0.15));
+  border-color: rgba(245,200,66,0.5);
+}
+.bk-location-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Light mode location modal ────────────────────────────────────────── */
+
+.bk-location-overlay.bk-light-modal .bk-location-panel {
+  background: linear-gradient(160deg, #ffffff 0%, #f7f5f2 100%);
+  border-color: rgba(154,128,32,0.18);
+}
+.bk-location-overlay.bk-light-modal .bk-location-head {
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+.bk-location-overlay.bk-light-modal .bk-location-title { color: #9a8020; }
+.bk-location-overlay.bk-light-modal .bk-location-field label { color: #5a5548; }
+.bk-location-overlay.bk-light-modal .bk-location-field input {
+  background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.15); color: #111122;
+}
+.bk-location-overlay.bk-light-modal .bk-location-field input::placeholder { color: rgba(0,0,0,0.3); }
+.bk-location-overlay.bk-light-modal .bk-location-field input:focus {
+  border-color: rgba(154,128,32,0.4); background: rgba(0,0,0,0.02);
+}
+.bk-location-overlay.bk-light-modal .bk-location-submit {
+  background: linear-gradient(135deg, rgba(154,128,32,0.15), rgba(154,128,32,0.08));
+  border-color: rgba(154,128,32,0.35); color: #7a6518;
+}
+.bk-location-overlay.bk-light-modal .bk-location-submit:hover {
+  background: linear-gradient(135deg, rgba(154,128,32,0.22), rgba(154,128,32,0.12));
+  border-color: rgba(154,128,32,0.5);
+}
+.bk-location-overlay.bk-light-modal .bk-month-close {
+  background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #5a5548;
+}
+.bk-location-overlay.bk-light-modal .bk-month-close:hover {
+  background: rgba(0,0,0,0.1); color: #111122;
 }
 
 /* ── Two-Column Layout ────────────────────────────────────────────────────── */
