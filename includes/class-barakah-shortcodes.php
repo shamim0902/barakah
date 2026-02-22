@@ -78,6 +78,9 @@ class Barakah_Shortcodes {
 			<?php endif; ?>
 			<?php echo $this->render_prayer_times_grid( $data, $a['city'] ); ?>
 			<?php echo $this->render_date_browser( $date, $a['city'], $a['country'], $a['method'] ); ?>
+			<?php if ( $a['show_ramadan'] ) : ?>
+				<?php echo $this->render_ramadan_month_plan( $a['city'], $a['country'], $a['method'] ); ?>
+			<?php endif; ?>
 			<?php if ( $a['show_ayah'] && ( ! empty( $ayah['arabic'] ) || ! empty( $ayah['bangla'] ) ) ) : ?>
 				<?php echo $this->render_ayah_card( $ayah ); ?>
 			<?php endif; ?>
@@ -128,6 +131,7 @@ class Barakah_Shortcodes {
 			<?php echo $this->render_header( $data, $a['city'], $a['country'] ); ?>
 			<?php echo $this->render_ramadan_cards( $data ); ?>
 			<?php echo $this->render_countdown( $data ); ?>
+			<?php echo $this->render_ramadan_month_plan( $a['city'], $a['country'], $a['method'] ); ?>
 		</div>
 		<?php
 		return ob_get_clean();
@@ -171,22 +175,23 @@ class Barakah_Shortcodes {
 	 * @return string
 	 */
 	private function render_header( $data, $city, $country ) {
-		$timings = isset( $data['timings'] ) ? $data['timings'] : array();
-		$date    = isset( $data['date'] ) ? $data['date'] : array();
+		$date     = isset( $data['date'] ) ? $data['date'] : array();
 		$readable = isset( $date['readable'] ) ? $date['readable'] : gmdate( 'd M Y' );
-		$hijri   = '';
+		$hijri    = '';
+		$is_ramadan = false;
 		if ( ! empty( $date['hijri'] ) ) {
 			$day   = isset( $date['hijri']['day'] ) ? $date['hijri']['day'] : '';
 			$month = isset( $date['hijri']['month']['en'] ) ? $date['hijri']['month']['en'] : '';
 			$year  = isset( $date['hijri']['year'] ) ? $date['hijri']['year'] : '';
 			$hijri = trim( $day . ' ' . $month . ', ' . $year );
+			$is_ramadan = isset( $date['hijri']['month']['number'] ) && (int) $date['hijri']['month']['number'] === 9;
 		}
 		$location = esc_html( $city . ', ' . strtoupper( $country ) );
 		ob_start();
 		?>
-		<div class="barakah-widget__header">
+		<div class="barakah-widget__header<?php echo $is_ramadan ? ' barakah-widget__header--ramadan' : ''; ?>">
 			<h2 class="barakah-widget__title">
-				<span class="barakah-widget__title-icon" aria-hidden="true"></span>
+				<span class="barakah-widget__title-icon barakah-widget__title-icon--crescent" aria-hidden="true"></span>
 				<?php esc_html_e( 'Today Sehri & Iftar Time', 'barakah' ); ?> <?php echo esc_html( $city ); ?>
 			</h2>
 			<div class="barakah-widget__meta">
@@ -318,6 +323,61 @@ class Barakah_Shortcodes {
 			<button type="button" class="barakah-widget__date-prev" aria-label="<?php esc_attr_e( 'Previous day', 'barakah' ); ?>">&larr;</button>
 			<input type="date" class="barakah-widget__date-input" value="<?php echo esc_attr( $this->date_dmy_to_iso( $date ) ); ?>" aria-label="<?php esc_attr_e( 'Select date', 'barakah' ); ?>">
 			<button type="button" class="barakah-widget__date-next" aria-label="<?php esc_attr_e( 'Next day', 'barakah' ); ?>">&rarr;</button>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
+
+	/**
+	 * Render Ramadan full month plan (button + modal placeholder; content loaded via JS).
+	 *
+	 * @param string $city    City.
+	 * @param string $country Country.
+	 * @param int    $method  Method.
+	 * @return string
+	 */
+	private function render_ramadan_month_plan( $city, $country, $method ) {
+		$current_month = (int) gmdate( 'n' );
+		$current_year  = (int) gmdate( 'Y' );
+		$modal_id     = 'barakah-ramadan-modal-' . wp_unique_id();
+		$title_id     = 'barakah-ramadan-modal-title-' . wp_unique_id();
+		ob_start();
+		?>
+		<div class="barakah-widget__ramadan-plan">
+			<button type="button" class="barakah-widget__ramadan-plan-btn" aria-expanded="false" aria-controls="<?php echo esc_attr( $modal_id ); ?>" data-city="<?php echo esc_attr( $city ); ?>" data-country="<?php echo esc_attr( $country ); ?>" data-method="<?php echo (int) $method; ?>">
+				<span class="barakah-widget__ramadan-plan-btn-icon" aria-hidden="true"></span>
+				<?php esc_html_e( 'View full month Ramadan plan', 'barakah' ); ?>
+			</button>
+			<div id="<?php echo esc_attr( $modal_id ); ?>" class="barakah-widget__ramadan-modal" role="dialog" aria-modal="true" aria-labelledby="<?php echo esc_attr( $title_id ); ?>" aria-hidden="true">
+				<div class="barakah-widget__ramadan-modal-backdrop"></div>
+				<div class="barakah-widget__ramadan-modal-content">
+					<div class="barakah-widget__ramadan-modal-header">
+						<h3 id="<?php echo esc_attr( $title_id ); ?>" class="barakah-widget__ramadan-modal-title"><?php esc_html_e( 'Ramadan Sehri & Iftar – Full Month', 'barakah' ); ?></h3>
+						<button type="button" class="barakah-widget__ramadan-modal-close" aria-label="<?php esc_attr_e( 'Close', 'barakah' ); ?>">&times;</button>
+					</div>
+					<div class="barakah-widget__ramadan-modal-body">
+						<div class="barakah-widget__ramadan-month-picker">
+							<label for="<?php echo esc_attr( $modal_id ); ?>-month"><?php esc_html_e( 'Month', 'barakah' ); ?></label>
+							<select id="<?php echo esc_attr( $modal_id ); ?>-month" class="barakah-widget__ramadan-month-select">
+								<?php for ( $m = 1; $m <= 12; $m++ ) : ?>
+									<option value="<?php echo (int) $m; ?>" <?php selected( $m, $current_month ); ?>><?php echo esc_html( gmdate( 'F', mktime( 0, 0, 0, $m, 1 ) ) ); ?></option>
+								<?php endfor; ?>
+							</select>
+							<label for="<?php echo esc_attr( $modal_id ); ?>-year"><?php esc_html_e( 'Year', 'barakah' ); ?></label>
+							<select id="<?php echo esc_attr( $modal_id ); ?>-year" class="barakah-widget__ramadan-year-select">
+								<?php for ( $y = $current_year - 1; $y <= $current_year + 2; $y++ ) : ?>
+									<option value="<?php echo (int) $y; ?>" <?php selected( $y, $current_year ); ?>><?php echo (int) $y; ?></option>
+								<?php endfor; ?>
+							</select>
+							<button type="button" class="barakah-widget__ramadan-load-btn"><?php esc_html_e( 'Load', 'barakah' ); ?></button>
+						</div>
+						<div class="barakah-widget__ramadan-table-wrap">
+							<p class="barakah-widget__ramadan-table-placeholder"><?php esc_html_e( 'Select month & year and click Load to see Sehri & Iftar for each day.', 'barakah' ); ?></p>
+							<div class="barakah-widget__ramadan-table-container" aria-live="polite"></div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 		<?php
 		return ob_get_clean();

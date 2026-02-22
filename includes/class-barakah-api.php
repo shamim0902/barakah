@@ -97,13 +97,97 @@ class Barakah_API {
 			);
 		}
 
+		$timings_raw = isset( $json['data']['timings'] ) ? $json['data']['timings'] : array();
 		$data = array(
-			'timings' => isset( $json['data']['timings'] ) ? $json['data']['timings'] : array(),
+			'timings' => $this->normalize_timings( $timings_raw ),
 			'date'    => isset( $json['data']['date'] ) ? $json['data']['date'] : array(),
 		);
 
 		set_transient( $cache_key, $data, $cache_hours * HOUR_IN_SECONDS );
 		return $data;
+	}
+
+	/**
+	 * Strip timezone suffix from timing strings (e.g. "05:22 (+06)" -> "05:22").
+	 *
+	 * @param array $timings Associative array of prayer => time string.
+	 * @return array
+	 */
+	private function normalize_timings( $timings ) {
+		if ( ! is_array( $timings ) ) {
+			return array();
+		}
+		$out = array();
+		foreach ( $timings as $key => $value ) {
+			$out[ $key ] = is_string( $value ) ? preg_replace( '/\s*\([^)]*\)\s*$/', '', trim( $value ) ) : $value;
+		}
+		return $out;
+	}
+
+	/**
+	 * Get full calendar month (prayer times for every day).
+	 *
+	 * @param string $city   City name.
+	 * @param string $country Country code or name.
+	 * @param int    $month  Gregorian month (1-12).
+	 * @param int    $year   Gregorian year (e.g. 2026).
+	 * @param int    $method Calculation method.
+	 * @return array{ days: array, error?: string }
+	 */
+	public function get_calendar_month( $city, $country, $month, $year, $method = 1 ) {
+		$month = max( 1, min( 12, (int) $month ) );
+		$year  = (int) $year;
+		$cache_hours = (int) get_option( 'barakah_cache_hours', 6 );
+		$cache_key   = 'barakah_cal_' . sanitize_key( $city . '_' . $country . '_' . $month . '_' . $year . '_' . $method );
+		$cached      = get_transient( $cache_key );
+		if ( false !== $cached && is_array( $cached ) ) {
+			return $cached;
+		}
+
+		$url = add_query_arg(
+			array(
+				'city'    => $city,
+				'country' => $country,
+				'month'   => $month,
+				'year'    => $year,
+				'method'  => $method,
+			),
+			self::ALADHAN_BASE . '/calendarByCity'
+		);
+
+		$response = wp_remote_get( $url, array(
+			'timeout'   => 20,
+			'sslverify' => true,
+		) );
+
+		if ( is_wp_error( $response ) ) {
+			return array( 'days' => array(), 'error' => $response->get_error_message() );
+		}
+
+		$code = wp_remote_retrieve_response_code( $response );
+		$body = wp_remote_retrieve_body( $response );
+		$json = json_decode( $body, true );
+
+		if ( 200 !== $code || empty( $json['data'] ) || ! is_array( $json['data'] ) ) {
+			return array( 'days' => array(), 'error' => __( 'Could not fetch calendar.', 'barakah' ) );
+		}
+
+		$days = array();
+		foreach ( $json['data'] as $day ) {
+			$timings = isset( $day['timings'] ) ? $this->normalize_timings( $day['timings'] ) : array();
+			$date   = isset( $day['date'] ) ? $day['date'] : array();
+			$days[] = array(
+				'timings' => $timings,
+				'date'    => $date,
+				'readable' => isset( $date['readable'] ) ? $date['readable'] : '',
+				'gregorian' => isset( $date['gregorian'] ) ? $date['gregorian'] : array(),
+				'hijri'   => isset( $date['hijri'] ) ? $date['hijri'] : array(),
+			);
+		}
+
+		$result = array( 'days' => $days );
+		set_transient( $cache_key, $result, $cache_hours * HOUR_IN_SECONDS );
+		return $result;
 	}
 
 	/**

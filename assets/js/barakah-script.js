@@ -305,6 +305,147 @@
 	}
 
 	/**
+	 * Format "HH:MM" to 12h (e.g. 05:22 -> "05:22 AM").
+	 */
+	function formatTime12(timeStr) {
+		if (!timeStr || typeof timeStr !== 'string') return '--:--';
+		var parts = timeStr.trim().match(/^(\d{1,2}):(\d{2})$/);
+		if (!parts) return timeStr;
+		var h = parseInt(parts[1], 10);
+		var m = parseInt(parts[2], 10);
+		var ampm = h >= 12 ? 'PM' : 'AM';
+		h = h % 12;
+		if (h === 0) h = 12;
+		return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+	}
+
+	/**
+	 * Ramadan full month modal: open/close and load calendar.
+	 */
+	function setupRamadanModal(widget) {
+		var planBlock = widget.querySelector('.barakah-widget__ramadan-plan');
+		if (!planBlock) return;
+
+		var btn = planBlock.querySelector('.barakah-widget__ramadan-plan-btn');
+		var modal = planBlock.querySelector('.barakah-widget__ramadan-modal');
+		var closeBtn = planBlock.querySelector('.barakah-widget__ramadan-modal-close');
+		var backdrop = planBlock.querySelector('.barakah-widget__ramadan-modal-backdrop');
+		var loadBtn = planBlock.querySelector('.barakah-widget__ramadan-load-btn');
+		var monthSelect = planBlock.querySelector('.barakah-widget__ramadan-month-select');
+		var yearSelect = planBlock.querySelector('.barakah-widget__ramadan-year-select');
+		var container = planBlock.querySelector('.barakah-widget__ramadan-table-container');
+		var placeholder = planBlock.querySelector('.barakah-widget__ramadan-table-placeholder');
+
+		if (!btn || !modal || !container) return;
+
+		function openModal() {
+			modal.setAttribute('aria-hidden', 'false');
+			if (btn) btn.setAttribute('aria-expanded', 'true');
+			document.body.style.overflow = 'hidden';
+		}
+
+		function closeModal() {
+			modal.setAttribute('aria-hidden', 'true');
+			if (btn) btn.setAttribute('aria-expanded', 'false');
+			document.body.style.overflow = '';
+		}
+
+		btn.addEventListener('click', openModal);
+		if (closeBtn) closeBtn.addEventListener('click', closeModal);
+		if (backdrop) backdrop.addEventListener('click', closeModal);
+
+		modal.addEventListener('keydown', function (e) {
+			if (e.key === 'Escape') closeModal();
+		});
+
+		function todayYMD() {
+			var d = new Date();
+			return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+		}
+
+		function buildTable(days, city) {
+			var today = todayYMD();
+			var html = '<table class="barakah-ramadan-table"><thead><tr>';
+			html += '<th>Date</th><th>Day (Hijri)</th><th>Sehri</th><th>Iftar</th></tr></thead><tbody>';
+			for (var i = 0; i < days.length; i++) {
+				var day = days[i];
+				var timings = day.timings || {};
+				var gregorian = day.gregorian || {};
+				var hijri = day.hijri || {};
+				var gDate = gregorian.date || '';
+				var gParts = gDate ? gDate.split('-') : [];
+				var ymd = gParts.length === 3 ? gParts[2] + '-' + gParts[1] + '-' + gParts[0] : '';
+				var readable = day.readable || ymd || '';
+				var hijriDay = hijri.day || '';
+				var hijriMonth = (hijri.month && hijri.month.en) ? hijri.month.en : '';
+				var hijriYear = hijri.year || '';
+				var hijriLabel = hijriDay && hijriMonth ? hijriDay + ' ' + hijriMonth + (hijriYear ? ', ' + hijriYear : '') : '';
+				var isRamadan = hijri.month && parseInt(hijri.month.number, 10) === 9;
+				var sehri = formatTime12(timings.Imsak || '');
+				var iftar = formatTime12(timings.Maghrib || '');
+				var rowClass = 'barakah-ramadan-row';
+				if (ymd === today) rowClass += ' barakah-ramadan-row--today';
+				html += '<tr class="' + rowClass + '">';
+				html += '<td class="barakah-ramadan-cell--day">' + (readable || '—') + '</td>';
+				html += '<td class="barakah-ramadan-cell--hijri' + (isRamadan ? ' barakah-ramadan-cell--ramadan' : '') + '">' + (hijriLabel || '—') + '</td>';
+				html += '<td>' + sehri + '</td><td>' + iftar + '</td>';
+				html += '</tr>';
+			}
+			html += '</tbody></table>';
+			return html;
+		}
+
+		if (loadBtn && monthSelect && yearSelect) {
+			loadBtn.addEventListener('click', function () {
+				var city = btn.getAttribute('data-city') || defaultCity;
+				var country = btn.getAttribute('data-country') || defaultCountry;
+				var method = parseInt(btn.getAttribute('data-method'), 10) || defaultMethod;
+				var month = parseInt(monthSelect.value, 10) || 1;
+				var year = parseInt(yearSelect.value, 10) || new Date().getFullYear();
+
+				loadBtn.disabled = true;
+				loadBtn.textContent = 'Loading…';
+
+				var formData = new FormData();
+				formData.append('action', 'barakah_get_calendar_month');
+				formData.append('nonce', nonce);
+				formData.append('month', month);
+				formData.append('year', year);
+				formData.append('city', city);
+				formData.append('country', country);
+				formData.append('method', method);
+
+				var req = new XMLHttpRequest();
+				req.open('POST', ajaxurl);
+				req.onload = function () {
+					loadBtn.disabled = false;
+					loadBtn.textContent = 'Load';
+					try {
+						var res = JSON.parse(req.responseText);
+						if (res.success && res.data && res.data.days) {
+							container.innerHTML = buildTable(res.data.days, res.data.city || city);
+							if (placeholder) placeholder.style.display = 'none';
+						} else if (res.success === false && res.data && res.data.message) {
+							container.innerHTML = '<p class="barakah-widget__ramadan-table-placeholder">' + res.data.message + '</p>';
+							if (placeholder) placeholder.style.display = 'none';
+						}
+					} catch (e) {
+						container.innerHTML = '<p class="barakah-widget__ramadan-table-placeholder">Error loading calendar.</p>';
+						if (placeholder) placeholder.style.display = 'none';
+					}
+				};
+				req.onerror = function () {
+					loadBtn.disabled = false;
+					loadBtn.textContent = 'Load';
+					container.innerHTML = '<p class="barakah-widget__ramadan-table-placeholder">Network error.</p>';
+					if (placeholder) placeholder.style.display = 'none';
+				};
+				req.send(formData);
+			});
+		}
+	}
+
+	/**
 	 * Init all widgets on page.
 	 */
 	function init() {
@@ -312,6 +453,7 @@
 		widgets.forEach(function (widget) {
 			initWidget(widget);
 			setupDateBrowser(widget);
+			setupRamadanModal(widget);
 		});
 	}
 

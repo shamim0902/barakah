@@ -39,6 +39,8 @@ class Barakah_Ajax {
 	public function register() {
 		add_action( 'wp_ajax_barakah_get_times', array( $this, 'get_times' ) );
 		add_action( 'wp_ajax_nopriv_barakah_get_times', array( $this, 'get_times' ) );
+		add_action( 'wp_ajax_barakah_get_calendar_month', array( $this, 'get_calendar_month' ) );
+		add_action( 'wp_ajax_nopriv_barakah_get_calendar_month', array( $this, 'get_calendar_month' ) );
 	}
 
 	/**
@@ -245,5 +247,34 @@ class Barakah_Ajax {
 		</div>
 		<?php
 		return ob_get_clean();
+	}
+
+	/**
+	 * AJAX handler: return full calendar month (Sehri/Iftar per day) for Ramadan plan.
+	 */
+	public function get_calendar_month() {
+		check_ajax_referer( 'barakah_ajax', 'nonce' );
+
+		$month  = isset( $_POST['month'] ) ? absint( $_POST['month'] ) : (int) gmdate( 'n' );
+		$year   = isset( $_POST['year'] ) ? absint( $_POST['year'] ) : (int) gmdate( 'Y' );
+		$city   = isset( $_POST['city'] ) ? sanitize_text_field( wp_unslash( $_POST['city'] ) ) : get_option( 'barakah_city', 'Dhaka' );
+		$country = isset( $_POST['country'] ) ? sanitize_text_field( wp_unslash( $_POST['country'] ) ) : get_option( 'barakah_country', 'Bangladesh' );
+		$method = isset( $_POST['method'] ) ? absint( $_POST['method'] ) : (int) get_option( 'barakah_method', 1 );
+
+		$month  = max( 1, min( 12, $month ) );
+		$api    = Barakah_API::get_instance();
+		$result = $api->get_calendar_month( $city, $country, $month, $year, $method );
+
+		if ( ! empty( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => $result['error'] ) );
+		}
+
+		wp_send_json_success( array(
+			'days'   => $result['days'],
+			'month'  => $month,
+			'year'   => $year,
+			'city'   => $city,
+			'country' => $country,
+		) );
 	}
 }
