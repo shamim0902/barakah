@@ -3,8 +3,8 @@
  * Plugin Name:  Barakah – Ramadan Prayer Times
  * Plugin URI:   https://github.com/shamim0902/barakah
  * Description:  A beautiful Ramadan prayer-times widget. Use [barakah] on any page or post.
- * Version:      1.0.5
- * Author:       Barakah Team
+ * Version: 1.0.6
+ * Author:  Hasanuzzaman
  * License:      GPL-2.0+
  * Text Domain:  barakah
  */

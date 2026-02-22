@@ -294,6 +294,88 @@ function barakah_settings_page() {
             margin-top: 6px;
         }
         .bk-preview-code .comment { color: rgba(255,255,255,0.35); }
+        /* Two-column inner layout for card fields */
+        .bk-card-wrap {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px 16px;
+            align-items: start;
+        }
+        /* Full-width items inside the card grid */
+        .bk-card-wrap > h2,
+        .bk-card-wrap > .bk-field-row,
+        .bk-card-wrap > .description,
+        .bk-card-wrap > p,
+        .bk-card-wrap > .bk-preview-code,
+        .bk-card-wrap > .bk-methods-info,
+        .bk-card-wrap > .bk-field.bk-field-full,
+        #bk-popup-settings > .bk-field.bk-field-full { grid-column: span 2; }
+        @media (max-width: 600px) { .bk-card-wrap { grid-template-columns: 1fr; } }
+        /* Preview button */
+        .bk-btn-preview {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: linear-gradient(135deg, #0d0d2b, #1a0a3e);
+            color: #F5C842; border: 1px solid rgba(245,200,66,0.4);
+            border-radius: 6px; padding: 6px 16px; font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; transition: all 0.2s; text-decoration: none;
+        }
+        .bk-btn-preview:hover { background: linear-gradient(135deg, #2c1a6e, #1a0a3e); color: #F5C842; }
+        /* Greeting popup preview styles */
+        #bk-admin-popup-overlay {
+            position: fixed; inset: 0; z-index: 999999;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(5,5,20,0.7); padding: 24px;
+            animation: bkAdminFadeIn 0.3s ease;
+        }
+        @keyframes bkAdminFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #bk-admin-popup-overlay .bk-greeting-panel {
+            position: relative; z-index: 1;
+            background: radial-gradient(ellipse at 50% 20%, rgba(20,12,60,0.95) 0%, rgba(10,8,30,0.92) 50%, rgba(5,5,18,0.90) 100%);
+            border: 1px solid rgba(245,200,66,0.22); border-radius: 28px;
+            width: 100%; max-width: 480px; min-height: 320px; padding: 0 0 36px; overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.5); font-family: 'Nunito', sans-serif; text-align: center;
+        }
+        #bk-admin-popup-overlay .bk-greeting-deco {
+            background: radial-gradient(ellipse at 50% 0%, rgba(245,200,66,0.12) 0%, transparent 60%),
+                        linear-gradient(180deg, rgba(107,60,200,0.3) 0%, transparent 100%);
+            padding: 36px 20px 20px;
+        }
+        #bk-admin-popup-overlay .bk-greeting-moon {
+            font-size: 3.5rem; line-height: 1;
+            filter: drop-shadow(0 0 24px rgba(245,200,66,0.6));
+        }
+        #bk-admin-popup-overlay .bk-greeting-bismillah {
+            font-size: 0.9rem; color: rgba(255,235,180,0.35);
+            letter-spacing: 0.06em; padding: 12px 24px 0; direction: rtl;
+        }
+        #bk-admin-popup-overlay .bk-greeting-kareem {
+            font-size: 1.8rem; font-weight: 700; color: #F5C842;
+            padding: 6px 32px 0; margin-bottom: 10px;
+            text-shadow: 0 2px 20px rgba(245,200,66,0.5);
+        }
+        #bk-admin-popup-overlay .bk-greeting-title {
+            font-size: 1rem; font-weight: 700; color: rgba(255,235,180,0.95);
+            padding: 0 24px; line-height: 1.5; margin-bottom: 8px;
+        }
+        #bk-admin-popup-overlay .bk-greeting-msg {
+            font-size: 0.84rem; color: rgba(255,235,180,0.52);
+            padding: 0 28px; line-height: 1.6;
+        }
+        #bk-admin-popup-overlay .bk-greeting-border-art {
+            margin: 20px auto 0; width: 60%; height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(245,200,66,0.3) 30%, rgba(245,200,66,0.5) 50%, rgba(245,200,66,0.3) 70%, transparent 100%);
+        }
+        #bk-admin-popup-overlay .bk-popup-close {
+            position: absolute; top: 10px; right: 14px;
+            color: rgba(255,235,180,0.4); background: none; border: none;
+            font-size: 1.4rem; cursor: pointer; line-height: 1;
+        }
+        #bk-admin-popup-overlay .bk-popup-close:hover { color: rgba(255,235,180,0.8); }
+        .bk-admin-confetti {
+            position: fixed; top: -50px; user-select: none; pointer-events: none;
+            z-index: 1000000; animation: bkAdminConfettiFall linear forwards;
+        }
+        @keyframes bkAdminConfettiFall { to { transform: translateY(110vh) rotate(720deg); } }
     </style>
 
     <div class="wrap bk-admin-wrap">
@@ -389,7 +471,7 @@ function barakah_settings_page() {
             <!-- Hijri Calendar Adjustment -->
             <div class="bk-card-wrap">
                 <h2><span class="dashicons dashicons-calendar-alt"></span> Hijri Calendar Adjustment</h2>
-                <div class="bk-field">
+                <div class="bk-field bk-field-full">
                     <label>Adjust Arabic calendar for my location</label>
                     <div class="description" style="margin-bottom:10px;">
                         In some regions (e.g. Bangladesh, parts of South Asia), the moon is sighted a day later than the standard calendar. Use this setting to adjust the Hijri day count accordingly.
@@ -547,17 +629,21 @@ function barakah_settings_page() {
 
             <!-- Greeting Popup -->
             <div class="bk-card-wrap">
-                <h2><span class="dashicons dashicons-megaphone"></span> Greeting Popup</h2>
-                <div class="bk-field">
+                <h2 style="justify-content:space-between;">
+                    <span style="display:flex;align-items:center;gap:6px;"><span class="dashicons dashicons-megaphone"></span> Greeting Popup</span>
+                    <button type="button" class="bk-btn-preview" onclick="bkAdminPreviewPopup()">🌙 Preview Popup</button>
+                </h2>
+                <div class="bk-field bk-field-full">
                     <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
-                        <input type="checkbox" name="barakah_greeting_popup" value="1" <?php checked( $greeting_popup, '1' ); ?> />
+                        <input type="checkbox" id="barakah_greeting_popup_enable" name="barakah_greeting_popup" value="1" <?php checked( $greeting_popup, '1' ); ?> onchange="bkTogglePopupSettings(this.checked)" />
                         Enable Greeting Popup
                     </label>
                     <div class="description">
                         Shows a Ramadan celebration popup — once per hour per visitor. No shortcode needed.
                     </div>
                 </div>
-                <div class="bk-field" style="margin-top:12px;">
+                <div id="bk-popup-settings" style="grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;align-items:start;<?php echo $greeting_popup !== '1' ? 'display:none;' : ''; ?>">
+                <div class="bk-field bk-field-full" style="margin-top:0;">
                     <label>Show popup on</label>
                     <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
                         <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
@@ -570,7 +656,7 @@ function barakah_settings_page() {
                         </label>
                     </div>
                 </div>
-                <div class="bk-field" id="bk-page-picker" style="margin-top:10px;<?php echo $greeting_popup_scope === 'all' ? 'display:none;' : ''; ?>">
+                <div class="bk-field bk-field-full" id="bk-page-picker" style="margin-top:10px;<?php echo $greeting_popup_scope === 'all' ? 'display:none;' : ''; ?>">
                     <label for="barakah_greeting_popup_page_ids">Select pages</label>
                     <select
                         name="barakah_greeting_popup_page_ids[]"
@@ -609,11 +695,73 @@ function barakah_settings_page() {
                     ><?php echo esc_textarea( $greeting_popup_msg ); ?></textarea>
                     <div class="description">Supporting message below the title. Leave empty to hide.</div>
                 </div>
+                </div><!-- /#bk-popup-settings -->
             </div>
             <script>
+            function bkTogglePopupSettings(enabled) {
+                var el = document.getElementById('bk-popup-settings');
+                if (!el) return;
+                el.style.display = enabled ? 'grid' : 'none';
+            }
             function bkTogglePagePicker(val) {
                 var el = document.getElementById('bk-page-picker');
                 if (el) el.style.display = (val === 'specific') ? '' : 'none';
+            }
+
+            function bkAdminPreviewPopup() {
+                var existing = document.getElementById('bk-admin-popup-overlay');
+                if (existing) existing.remove();
+                document.querySelectorAll('.bk-admin-confetti').forEach(function(el){ el.remove(); });
+
+                var title = (document.getElementById('barakah_greeting_popup_title') || {}).value || 'رمضان كريم';
+                var msg   = (document.getElementById('barakah_greeting_popup_msg')   || {}).value || '';
+
+                function esc(s) {
+                    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                }
+
+                var overlay = document.createElement('div');
+                overlay.id = 'bk-admin-popup-overlay';
+                overlay.innerHTML =
+                    '<div class="bk-greeting-panel">' +
+                        '<button class="bk-popup-close" onclick="bkAdminClosePopup()">&#x2715;</button>' +
+                        '<div class="bk-greeting-deco"><div class="bk-greeting-moon">🌙</div></div>' +
+                        '<div class="bk-greeting-bismillah">بِسمِ اللّهِ الرَّحمٰنِ الرَّحِيمِ</div>' +
+                        '<div class="bk-greeting-kareem">رمضان كريم</div>' +
+                        '<div class="bk-greeting-title">' + esc(title) + '</div>' +
+                        (msg ? '<div class="bk-greeting-msg">' + esc(msg) + '</div>' : '') +
+                        '<div class="bk-greeting-border-art"></div>' +
+                    '</div>';
+
+                overlay.addEventListener('click', function(e){ if (e.target === overlay) bkAdminClosePopup(); });
+                document.body.appendChild(overlay);
+
+                /* Confetti */
+                var shapes = ['🌙','⭐','✨','✦'], colors = ['#FFD700','#F8F8FF','#E6E6FA','#20B2AA'];
+                var confettiInterval = setInterval(function() {
+                    var el = document.createElement('div');
+                    el.className = 'bk-admin-confetti';
+                    el.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                    el.style.color = colors[Math.floor(Math.random() * colors.length)];
+                    el.style.left = (Math.random() * 100) + 'vw';
+                    el.style.fontSize = (Math.random() * 18 + 14) + 'px';
+                    var dur = (Math.random() * 3 + 3);
+                    el.style.animationDuration = dur + 's';
+                    document.body.appendChild(el);
+                    setTimeout(function(){ if (el.parentNode) el.parentNode.removeChild(el); }, dur * 1000 + 200);
+                }, 150);
+
+                overlay._confettiInterval = confettiInterval;
+                setTimeout(function(){ bkAdminClosePopup(); }, 6000);
+            }
+
+            function bkAdminClosePopup() {
+                var overlay = document.getElementById('bk-admin-popup-overlay');
+                if (overlay) {
+                    clearInterval(overlay._confettiInterval);
+                    overlay.remove();
+                }
+                document.querySelectorAll('.bk-admin-confetti').forEach(function(el){ el.remove(); });
             }
             </script>
 
