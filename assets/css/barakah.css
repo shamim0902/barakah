@@ -1,0 +1,399 @@
+/* ============================================================
+   Barakah – Ramadan Prayer Times Plugin  v1.0.0
+   All classes prefixed with .bk- to avoid theme conflicts.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Nunito:wght@300;400;500;600;700&display=swap');
+
+/* ── Loading & Error states ───────────────────────────────────────────────── */
+
+#barakah-widget { box-sizing: border-box; }
+#barakah-widget *, #barakah-widget *::before, #barakah-widget *::after { box-sizing: border-box; }
+
+.bk-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: linear-gradient(160deg,#0a0a1a,#1a0a3e);
+  border-radius: 16px;
+  color: rgba(255,235,180,0.65);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.9rem;
+  gap: 14px;
+}
+.bk-loading-moon   { font-size: 2.5rem; animation: bkPulse 1.6s ease-in-out infinite; }
+.bk-loading-spinner{
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid rgba(245,200,66,0.2);
+  border-top-color: #F5C842;
+  animation: bkSpin 0.9s linear infinite;
+}
+@keyframes bkSpin  { to { transform: rotate(360deg); } }
+@keyframes bkPulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+.bk-error {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 50px 24px; text-align: center;
+  background: linear-gradient(160deg,#0a0a1a,#1a0a3e); border-radius: 16px;
+  font-family: 'Nunito', sans-serif;
+}
+.bk-error-icon { font-size: 2.5rem; }
+.bk-error p    { color: rgba(255,235,180,0.6); font-size: 0.85rem; margin: 0; }
+
+/* ── Root container ────────────────────────────────────────────────────────── */
+
+.bk-root {
+  position: relative;
+  width: 100%;
+  min-height: 600px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(160deg, #0a0a1a 0%, #0d0d2b 30%, #150a35 60%, #1a0a3e 100%);
+  font-family: 'Nunito', sans-serif;
+}
+
+/* Stars canvas */
+.bk-stars {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none; z-index: 0;
+}
+
+/* Glow orbs */
+.bk-orb {
+  position: absolute; border-radius: 50%;
+  pointer-events: none; z-index: 0;
+}
+.bk-orb1 {
+  top: -12%; right: -12%; width: 45%; padding-top: 45%;
+  background: radial-gradient(circle, rgba(245,200,66,0.07) 0%, transparent 70%);
+}
+.bk-orb2 {
+  bottom: -8%; left: -8%; width: 35%; padding-top: 35%;
+  background: radial-gradient(circle, rgba(107,140,222,0.09) 0%, transparent 70%);
+}
+
+/* Body (scrollable content) */
+.bk-body {
+  position: relative; z-index: 1;
+  max-width: 480px; margin: 0 auto;
+  padding: 0 16px 32px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* ── Entrance animations ───────────────────────────────────────────────────── */
+
+.bk-anim {
+  opacity: 0;
+  transform: translateY(18px);
+  animation: bkFadeUp 0.55s ease forwards;
+}
+.bk-d1 { animation-delay: 0.10s; }
+.bk-d2 { animation-delay: 0.20s; }
+.bk-d3 { animation-delay: 0.30s; }
+.bk-d4 { animation-delay: 0.42s; }
+.bk-d5 { animation-delay: 0.52s; }
+@keyframes bkFadeUp { to { opacity: 1; transform: translateY(0); } }
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+
+.bk-header {
+  padding-top: 22px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  text-align: center;
+}
+
+.bk-logo-row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; justify-content: flex-start;
+  margin-bottom: 4px;
+}
+
+.bk-crescent { flex-shrink: 0; }
+
+.bk-brand-name {
+  color: #F5C842;
+  font-size: 1.35rem; font-weight: 700; letter-spacing: 0.03em; line-height: 1;
+}
+.bk-brand-ar {
+  color: rgba(255,235,180,0.5);
+  font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+}
+
+.bk-day-badge {
+  margin-left: auto;
+  background: rgba(245,200,66,0.15);
+  border: 1px solid rgba(245,200,66,0.35);
+  border-radius: 20px;
+  padding: 4px 12px;
+  color: #F5C842;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.bk-location {
+  display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+  color: rgba(255,235,180,0.55); font-size: 0.72rem;
+}
+.bk-sep { opacity: 0.4; margin: 0 4px; }
+
+.bk-clock {
+  font-weight: 700; font-size: 2.4rem; color: #fff;
+  letter-spacing: 0.06em; font-variant-numeric: tabular-nums; line-height: 1.1;
+}
+
+.bk-hijri {
+  color: rgba(255,235,180,0.4);
+  font-family: 'Amiri', serif; font-size: 0.8rem; letter-spacing: 0.03em;
+}
+
+/* ── Sehri & Iftar cards ──────────────────────────────────────────────────── */
+
+.bk-main-cards {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+
+.bk-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px; padding: 14px;
+  backdrop-filter: blur(12px);
+  position: relative; overflow: hidden;
+  transition: border-color 0.4s, background 0.4s;
+}
+
+.bk-card-sehri.bk-card-glow-blue {
+  background: linear-gradient(135deg, rgba(107,140,222,0.25) 0%, rgba(107,140,222,0.08) 100%);
+  border-color: rgba(107,140,222,0.5);
+}
+.bk-card-iftar.bk-card-glow-orange {
+  background: linear-gradient(135deg, rgba(255,140,66,0.28) 0%, rgba(255,140,66,0.08) 100%);
+  border-color: rgba(255,140,66,0.5);
+}
+
+.bk-card-emoji {
+  position: absolute; top: 8px; right: 10px;
+  font-size: 1.4rem; opacity: 0.22;
+}
+.bk-card-label {
+  font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px;
+}
+.bk-card-sehri .bk-card-label { color: #6B8CDE; }
+.bk-card-iftar  .bk-card-label { color: #FF8C42; }
+
+.bk-card-ar {
+  color: rgba(255,235,180,0.45); font-family: 'Amiri', serif;
+  font-size: 0.88rem; margin-bottom: 3px;
+}
+
+.bk-card-time {
+  color: #fff; font-weight: 700; font-size: 1.4rem;
+  letter-spacing: 0.03em; font-variant-numeric: tabular-nums;
+}
+
+.bk-badge {
+  display: inline-block; border-radius: 8px;
+  padding: 2px 8px; font-size: 0.62rem; font-weight: 600; margin-top: 7px;
+}
+.bk-badge-blue   { background: rgba(107,140,222,0.2); border: 1px solid rgba(107,140,222,0.35); color: #8AAAE8; }
+.bk-badge-orange { background: rgba(255,140,66,0.2);  border: 1px solid rgba(255,140,66,0.35);  color: #FFB07A; }
+
+/* ── Countdown banner ─────────────────────────────────────────────────────── */
+
+.bk-countdown {
+  background: linear-gradient(135deg, rgba(245,200,66,0.14) 0%, rgba(245,200,66,0.05) 100%);
+  border: 1px solid rgba(245,200,66,0.28);
+  border-radius: 16px; padding: 14px 18px;
+  backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+
+.bk-cd-label { color: rgba(255,235,180,0.55); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.bk-cd-name  { color: #fff; font-weight: 700; font-size: 1rem; }
+.bk-cd-arabic{ color: rgba(255,235,180,0.45); font-family: 'Amiri', serif; font-size: 0.8rem; }
+
+.bk-cd-timer { text-align: right; flex-shrink: 0; }
+.bk-cd-timelabel { color: #F5C842; font-size: 0.62rem; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 2px; }
+.bk-cd-display { color: #fff; font-weight: 700; font-size: 1.5rem; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.bk-cd-display span { color: #F5C842; font-size: 0.9rem; }
+
+/* ── Full prayer list ─────────────────────────────────────────────────────── */
+
+.bk-prayers {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px; overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+.bk-section-head {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  color: #F5C842; font-weight: 600; font-size: 0.85rem;
+  display: flex; align-items: center; gap: 7px;
+  letter-spacing: 0.04em;
+}
+
+.bk-prayer-row {
+  display: flex; align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  transition: background 0.3s;
+}
+.bk-prayer-row:last-child { border-bottom: none; }
+
+.bk-prayer-icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem; margin-right: 12px; flex-shrink: 0;
+}
+
+.bk-prayer-info { flex: 1; min-width: 0; }
+.bk-prayer-name {
+  color: rgba(255,235,180,0.8); font-weight: 500; font-size: 0.85rem; line-height: 1.2;
+}
+.bk-prayer-arabic { color: rgba(255,235,180,0.28); font-family: 'Amiri', serif; font-size: 0.75rem; }
+
+.bk-prayer-time {
+  font-weight: 500; font-size: 0.9rem;
+  font-variant-numeric: tabular-nums; margin-left: 8px;
+}
+
+.bk-prayer-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.18);
+  margin-left: 10px; flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+/* Next prayer row */
+.bkpr-next { background: rgba(245,200,66,0.09); }
+.bkpr-next .bk-prayer-name { color: #fff; font-weight: 700; }
+
+/* Active (passed most recently) */
+.bkpr-active .bk-prayer-name { color: rgba(255,235,180,0.6); }
+
+/* Passed */
+.bkpr-passed .bk-prayer-name,
+.bkpr-passed .bk-prayer-time { opacity: 0.4; }
+
+/* NEXT pill */
+.bk-next-pill {
+  display: none;
+  background: rgba(245,200,66,0.2);
+  border: 1px solid rgba(245,200,66,0.4);
+  border-radius: 6px; padding: 1px 6px;
+  color: #F5C842; font-size: 0.58rem; font-weight: 700;
+  vertical-align: middle; letter-spacing: 0.05em; margin-left: 6px;
+}
+
+/* ── Dua cards ────────────────────────────────────────────────────────────── */
+
+.bk-dua-card {
+  border-radius: 16px; padding: 15px 16px;
+  backdrop-filter: blur(10px);
+}
+
+/* Default dua card */
+.bk-dua-card:not(.bk-dua-iftar):not(.bk-dua-sehri) {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+}
+
+.bk-dua-iftar {
+  background: linear-gradient(135deg, rgba(255,140,66,0.12) 0%, rgba(245,200,66,0.05) 100%);
+  border: 1px solid rgba(255,140,66,0.24);
+}
+.bk-dua-sehri {
+  background: linear-gradient(135deg, rgba(107,140,222,0.12) 0%, rgba(155,143,214,0.05) 100%);
+  border: 1px solid rgba(107,140,222,0.22);
+}
+
+.bk-dua-head {
+  display: flex; align-items: center; gap: 6px;
+  font-weight: 600; font-size: 0.78rem; letter-spacing: 0.07em; text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.bk-dua-iftar  .bk-dua-head { color: #FF8C42; }
+.bk-dua-sehri  .bk-dua-head { color: #8AAAE8; }
+.bk-dua-card:not(.bk-dua-iftar):not(.bk-dua-sehri) .bk-dua-head { color: #F5C842; }
+
+.bk-dua-arabic {
+  color: #fff; font-family: 'Amiri', serif; font-size: 1.08rem;
+  text-align: right; line-height: 1.85; direction: rtl; margin-bottom: 7px;
+}
+.bk-dua-arabic-box {
+  color: #fff; font-family: 'Amiri', serif; font-size: 1.12rem;
+  text-align: right; line-height: 1.9; direction: rtl;
+  background: rgba(245,200,66,0.06);
+  border: 1px solid rgba(245,200,66,0.12);
+  border-radius: 10px; padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.bk-dua-trans {
+  color: rgba(255,235,180,0.55); font-size: 0.72rem;
+  font-style: italic; line-height: 1.5; margin-bottom: 6px;
+}
+.bk-dua-meaning {
+  color: rgba(255,235,180,0.88); font-size: 0.8rem; line-height: 1.6; margin-bottom: 8px;
+}
+.bk-dua-source {
+  color: rgba(255,235,180,0.35); font-size: 0.65rem; margin-top: 4px;
+}
+.bk-dua-divider {
+  display: flex; align-items: center; gap: 8px; margin-top: 4px;
+}
+.bk-dua-divider::before,
+.bk-dua-divider::after { content:''; flex: 1; height: 1px; background: rgba(255,255,255,0.07); }
+.bk-dua-divider span { color: rgba(255,235,180,0.32); font-size: 0.63rem; letter-spacing: 0.04em; white-space: nowrap; }
+
+/* Top row of daily dua section */
+.bk-dua-top {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.bk-dua-controls { display: flex; align-items: center; gap: 8px; }
+
+/* Dua progress dots */
+.bk-dots { display: flex; gap: 4px; align-items: center; }
+.bk-dot {
+  width: 6px; height: 6px; border-radius: 3px;
+  background: rgba(255,255,255,0.2);
+  cursor: pointer; transition: all 0.3s;
+}
+.bk-dot-on { width: 16px; background: #F5C842; }
+
+/* Refresh button */
+.bk-refresh {
+  background: rgba(245,200,66,0.15);
+  border: 1px solid rgba(245,200,66,0.3);
+  border-radius: 8px; width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  color: #F5C842; cursor: pointer; font-size: 1.1rem; line-height: 1;
+  transition: all 0.2s; padding: 0;
+}
+.bk-refresh:hover { background: rgba(245,200,66,0.25); }
+
+/* Dua body transition */
+.bk-dua-body { transition: opacity 0.3s, transform 0.3s; }
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+
+.bk-footer {
+  text-align: center; padding-top: 4px;
+  color: rgba(255,235,180,0.22);
+  font-size: 0.65rem; letter-spacing: 0.06em;
+  font-family: 'Amiri', serif;
+}
+
+/* ── Responsive tweaks ────────────────────────────────────────────────────── */
+
+@media (max-width: 400px) {
+  .bk-clock       { font-size: 2rem; }
+  .bk-card-time   { font-size: 1.2rem; }
+  .bk-cd-display  { font-size: 1.25rem; }
+  .bk-main-cards  { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bk-body        { padding: 0 12px 24px; }
+}

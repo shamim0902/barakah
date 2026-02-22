@@ -1,38 +1,70 @@
-=== Barakah - Islamic Prayer Times & Insights ===
-
-Contributors: barakah-wp
-Tags: prayer times, namaz, ramadan, sehri, iftar, quran, dua, islamic
-Requires at least: 5.0
-Tested up to: 6.4
-Stable tag: 1.0.0
+=== Barakah – Ramadan Prayer Times ===
+Contributors: barakahteam
+Tags: ramadan, prayer times, islamic, salah, iftar, sehri, muslim
+Requires at least: 5.5
+Tested up to: 6.7
 Requires PHP: 7.4
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+Stable tag: 1.0.0
+License: GPL-2.0+
 
-Islamic Prayer Times, Sehri/Iftar, daily Quran verse and Duas. Shortcode-based, mobile-friendly.
+A beautiful dark-themed Ramadan prayer times widget powered by the Aladhan API.
+Use [barakah] shortcode on any page or post.
 
 == Description ==
 
-Barakah displays prayer times (Fajr, Dhuhr, Asr, Maghrib, Isha), Sehri and Iftar times with a live countdown and fasting progress bar. It supports browsing any date, daily Quran verse (Arabic + Bangla) and daily Duas from a bundled list. Uses free APIs: AlAdhan for times, Al Quran Cloud for verses. Fully responsive with a green Islamic theme.
+Barakah displays a fully responsive, animated prayer times widget featuring:
 
-== Shortcodes ==
-
-* [barakah] – Full widget (header, Sehri/Iftar, countdown, prayer grid, date browser, Ayah, Dua)
-* [barakah_prayer_times] – Prayer times grid + date browser
-* [barakah_ramadan] – Sehri/Iftar cards + Iftar countdown
-* [barakah_ayah] – Daily Quran verse
-* [barakah_dua] – Daily Dua (optional attribute: category="Iftar")
-
-Attributes (where applicable): city="Sylhet" country="Bangladesh" method="1"
+* Live countdown to the next prayer (Fajr, Dhuhr, Asr, Maghrib, Isha)
+* Prominent Sehri & Iftar time cards
+* Full daily prayer timetable with active prayer highlighted
+* Animated twinkling star background
+* Rotating Dua / Dhikr section (8 authentic duas)
+* Dua at Iftar and Niyyah for Sehri
+* Hijri date display
+* Powered by the free Aladhan API — no API key required
 
 == Installation ==
 
-1. Upload the plugin folder to wp-content/plugins/barakah.
-2. Activate the plugin from the Plugins screen.
-3. Go to Settings > Barakah to set default city, country and calculation method.
-4. Add [barakah] to any page or post.
+1. Upload the `barakah` folder to `/wp-content/plugins/`
+2. Activate the plugin via **Plugins → Installed Plugins**
+3. Go to **Barakah** in the admin sidebar and configure your city, country, and calculation method
+4. Add [barakah] to any page, post, or widget
+
+== Shortcode Usage ==
+
+Basic (uses admin settings):
+  [barakah]
+
+Override city & country inline:
+  [barakah city="London" country="UK"]
+
+Override everything:
+  [barakah city="Istanbul" country="Turkey" method="13"]
+
+== Calculation Methods ==
+
+1  – Muslim World League
+2  – Islamic Society of North America (ISNA)
+3  – Egyptian General Authority of Survey
+4  – Umm Al-Qura University, Makkah
+5  – University of Islamic Sciences, Karachi
+7  – Institute of Geophysics, Tehran
+8  – Gulf Region
+9  – Kuwait
+10 – Qatar
+11 – Singapore
+12 – Union Organization Islamic de France
+13 – Diyanet İşleri Başkanlığı, Turkey
+14 – Spiritual Administration of Muslims of Russia
+15 – Moonsighting Committee Worldwide
 
 == Changelog ==
 
 = 1.0.0 =
-* Initial release. Prayer times, Sehri/Iftar, countdown, date browser, daily Ayah and Dua shortcodes.
+* Initial release
+
+== Notes ==
+
+Prayer times are fetched client-side from https://api.aladhan.com.
+The site must be able to reach this API. No API key is required.
+Times are displayed in the local time of the configured city.
