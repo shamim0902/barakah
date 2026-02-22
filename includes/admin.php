@@ -120,6 +120,24 @@ function barakah_settings_page() {
                 $iftar_caution = max( 0, min( 60, $iftar_caution ) );
                 update_option( 'barakah_iftar_caution_minutes', $iftar_caution );
 
+                $sticky_bar = isset( $_POST['barakah_sticky_bar'] ) ? '1' : '0';
+                update_option( 'barakah_sticky_bar', $sticky_bar );
+
+                $sticky_pos = sanitize_text_field( wp_unslash( $_POST['barakah_sticky_position'] ?? 'footer' ) );
+                if ( ! in_array( $sticky_pos, [ 'header', 'footer' ], true ) ) {
+                    $sticky_pos = 'footer';
+                }
+                update_option( 'barakah_sticky_position', $sticky_pos );
+
+                $sticky_greeting = sanitize_text_field( wp_unslash( $_POST['barakah_sticky_greeting'] ?? '' ) );
+                update_option( 'barakah_sticky_greeting', $sticky_greeting );
+
+                $sticky_theme = sanitize_text_field( wp_unslash( $_POST['barakah_sticky_theme'] ?? 'dark' ) );
+                if ( ! in_array( $sticky_theme, [ 'dark', 'light' ], true ) ) {
+                    $sticky_theme = 'dark';
+                }
+                update_option( 'barakah_sticky_theme', $sticky_theme );
+
                 Barakah_API::flush_cache();
                 $saved = true;
             }
@@ -145,6 +163,10 @@ function barakah_settings_page() {
     $hijri_adjust_days    = (int) get_option( 'barakah_hijri_adjust_days', 0 );
     $sehri_caution        = (int) get_option( 'barakah_sehri_caution_minutes', 0 );
     $iftar_caution        = (int) get_option( 'barakah_iftar_caution_minutes', 0 );
+    $sticky_bar      = get_option( 'barakah_sticky_bar', '0' );
+    $sticky_pos      = get_option( 'barakah_sticky_position', 'footer' );
+    $sticky_greeting = get_option( 'barakah_sticky_greeting', 'Ramadan Mubarak! 🌙' );
+    $sticky_theme    = get_option( 'barakah_sticky_theme', 'dark' );
     $methods     = barakah_get_methods();
     ?>
     <style>
@@ -762,6 +784,65 @@ function barakah_settings_page() {
                     overlay.remove();
                 }
                 document.querySelectorAll('.bk-admin-confetti').forEach(function(el){ el.remove(); });
+            }
+            </script>
+
+            <!-- Sticky Prayer Bar -->
+            <div class="bk-card-wrap">
+                <h2><span class="dashicons dashicons-minus"></span> Sticky Prayer Bar</h2>
+                <div class="bk-field bk-field-full">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="barakah_sticky_bar_enable" name="barakah_sticky_bar" value="1" <?php checked( $sticky_bar, '1' ); ?> onchange="bkToggleStickySettings(this.checked)" />
+                        Enable Sticky Prayer Bar
+                    </label>
+                    <div class="description">
+                        Shows a 60px sticky bar with Sehri &amp; Iftar times on every page — no shortcode needed.
+                    </div>
+                </div>
+                <div id="bk-sticky-settings" style="grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;align-items:start;<?php echo $sticky_bar !== '1' ? 'display:none;' : ''; ?>">
+                    <div class="bk-field">
+                        <label>Bar Position</label>
+                        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+                            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                                <input type="radio" name="barakah_sticky_position" value="footer" <?php checked( $sticky_pos, 'footer' ); ?> />
+                                Footer (bottom of page)
+                            </label>
+                            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                                <input type="radio" name="barakah_sticky_position" value="header" <?php checked( $sticky_pos, 'header' ); ?> />
+                                Header (top of page)
+                            </label>
+                        </div>
+                    </div>
+                    <div class="bk-field">
+                        <label for="barakah_sticky_greeting">Greeting Text</label>
+                        <input
+                            type="text"
+                            id="barakah_sticky_greeting"
+                            name="barakah_sticky_greeting"
+                            value="<?php echo esc_attr( $sticky_greeting ); ?>"
+                            placeholder="Ramadan Mubarak! 🌙"
+                        />
+                        <div class="description">Short greeting shown in the bar alongside prayer times.</div>
+                    </div>
+                    <div class="bk-field">
+                        <label>Bar Design</label>
+                        <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+                            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                                <input type="radio" name="barakah_sticky_theme" value="dark" <?php checked( $sticky_theme, 'dark' ); ?> />
+                                Dark (Islamic night sky)
+                            </label>
+                            <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                                <input type="radio" name="barakah_sticky_theme" value="light" <?php checked( $sticky_theme, 'light' ); ?> />
+                                Light (clean white)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <script>
+            function bkToggleStickySettings(enabled) {
+                var el = document.getElementById('bk-sticky-settings');
+                if (el) el.style.display = enabled ? 'grid' : 'none';
             }
             </script>
 

@@ -1226,3 +1226,389 @@
   .bk-greeting-title   { font-size: 1rem; }
   .bk-greeting-deco    { padding: 36px 16px 18px; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   STICKY PRAYER BAR  — paper-scroll roll with Ramadan ambience
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.bk-sticky-bar {
+  position: fixed;
+  left: 0; right: 0;
+  height: 60px;
+  z-index: 999998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: linear-gradient(90deg, #060618 0%, #12093a 40%, #1a0a3e 50%, #12093a 60%, #060618 100%);
+  border-color: rgba(245,200,66,0.22);
+  border-style: solid;
+  border-width: 0;
+  font-family: 'Nunito', -apple-system, sans-serif;
+  color: rgba(255,235,180,0.88);
+  font-size: 0.88rem;
+  padding: 0 20px;
+  box-shadow: 0 0 40px rgba(245,200,66,0.06);
+  transform-origin: right center;
+  overflow: visible;
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+              border-radius 0.5s ease,
+              box-shadow 0.8s ease;
+}
+.bk-sticky-bar.bk-sticky-top    { top: 0;    border-bottom-width: 1px; }
+.bk-sticky-bar.bk-sticky-bottom { bottom: 0; border-top-width: 1px; }
+
+/* Scroll-cylinder shadow at the fold edge (visible on rolled bar) */
+.bk-sticky-bar::after {
+  content: '';
+  position: absolute;
+  left: 54px; top: 0; bottom: 0;
+  width: 22px;
+  background: linear-gradient(to right,
+    rgba(0,0,0,0.45) 0%,
+    rgba(0,0,0,0.2) 35%,
+    rgba(0,0,0,0.06) 65%,
+    transparent 100%);
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.25s;
+}
+.bk-sticky-bar.bk-rolled::after { opacity: 1; }
+
+/* ── Rolled state — paper-scroll to right edge ── */
+.bk-sticky-bar.bk-rolled {
+  transform: translateX(calc(100% - 56px));
+  box-shadow:
+    -12px 0 35px rgba(0,0,0,0.45),
+    -4px 0 10px rgba(0,0,0,0.3),
+    0 0 60px rgba(245,200,66,0.06),
+    inset 4px 0 12px rgba(0,0,0,0.15);
+}
+.bk-sticky-bar.bk-rolled.bk-sticky-bottom {
+  border-top-left-radius: 18px;
+}
+.bk-sticky-bar.bk-rolled.bk-sticky-top {
+  border-bottom-left-radius: 18px;
+}
+
+/* ── Content fades slightly when rolling ── */
+.bk-sticky-bar > *:not(.bk-sbar-roll-tab) {
+  transition: opacity 0.5s ease;
+}
+.bk-sticky-bar.bk-rolled > *:not(.bk-sbar-roll-tab) {
+  opacity: 0;
+}
+
+/* ── Roll tab — Ramadan scroll-edge tab ── */
+.bk-sbar-roll-tab {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 56px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer; gap: 2px;
+  opacity: 0; pointer-events: none;
+  z-index: 5;
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(245,200,66,0.08) 0%, transparent 70%),
+    linear-gradient(160deg, rgba(18,9,58,0.98) 0%, rgba(26,10,62,0.99) 100%);
+  transition: opacity 0.45s ease 0.2s;
+}
+.bk-sticky-bar.bk-rolled .bk-sbar-roll-tab {
+  opacity: 1; pointer-events: auto;
+}
+.bk-sticky-bar.bk-rolled.bk-sticky-bottom .bk-sbar-roll-tab {
+  border-top-left-radius: 18px;
+}
+.bk-sticky-bar.bk-rolled.bk-sticky-top .bk-sbar-roll-tab {
+  border-bottom-left-radius: 18px;
+}
+
+/* Golden glow halo behind the tab */
+.bk-sbar-roll-tab::before {
+  content: '';
+  position: absolute;
+  inset: -6px -2px -6px -10px;
+  border-radius: 20px 0 0 20px;
+  background: radial-gradient(ellipse at 60% 50%,
+    rgba(245,200,66,0.12) 0%,
+    rgba(245,200,66,0.04) 50%,
+    transparent 80%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.6s ease 0.35s;
+  animation: bkGoldenHalo 3s ease-in-out infinite;
+}
+.bk-sticky-bar.bk-rolled .bk-sbar-roll-tab::before { opacity: 1; }
+
+/* Scroll fold-crease with golden shimmer */
+.bk-sbar-roll-tab::after {
+  content: '';
+  position: absolute;
+  right: -1px; top: 0; bottom: 0; width: 3px;
+  background:
+    linear-gradient(180deg,
+      transparent 0%,
+      rgba(245,200,66,0.12) 10%,
+      rgba(245,200,66,0.45) 50%,
+      rgba(245,200,66,0.12) 90%,
+      transparent 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease 0.3s;
+}
+.bk-sticky-bar.bk-rolled .bk-sbar-roll-tab::after {
+  opacity: 1;
+  animation: bkCreaseShimmer 2.8s ease-in-out infinite;
+}
+
+/* ── Tab inner elements ── */
+
+.bk-sbar-roll-tab-icon {
+  font-size: 1.5rem; line-height: 1;
+  filter: drop-shadow(0 0 6px rgba(245,200,66,0.6))
+          drop-shadow(0 0 14px rgba(245,200,66,0.25));
+}
+
+.bk-sbar-roll-star {
+  font-size: 0.55rem;
+  color: rgba(245,200,66,0.6);
+  line-height: 1;
+  letter-spacing: 3px;
+}
+
+.bk-sbar-roll-dots {
+  display: flex; flex-direction: column; gap: 3px;
+  margin-top: 1px;
+}
+.bk-sbar-roll-dot {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: rgba(245,200,66,0.5);
+  animation: bkDotTwinkle 2s ease-in-out infinite;
+}
+.bk-sbar-roll-dot:nth-child(2) { animation-delay: 0.6s; }
+.bk-sbar-roll-dot:nth-child(3) { animation-delay: 1.2s; }
+
+.bk-sticky-bar.bk-sticky-light .bk-sbar-roll-dot {
+  background: rgba(44,26,110,0.35);
+}
+
+/* ── Keyframes ── */
+
+@keyframes bkGoldenHalo {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1; transform: scale(1.08); }
+}
+
+@keyframes bkCreaseShimmer {
+  0%   { background-position: 0 100%; opacity: 0.7; }
+  50%  { opacity: 1; }
+  100% { background-position: 0 -100%; opacity: 0.7; }
+}
+
+@keyframes bkDotTwinkle {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50%      { opacity: 1; transform: scale(1.3); }
+}
+
+@keyframes bkMoonFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-2px) scale(1.08); }
+}
+
+.bk-sticky-bar.bk-rolled .bk-sbar-roll-tab-icon {
+  animation: bkMoonFloat 3s ease-in-out infinite;
+}
+
+/* ── Light mode: scroll shadows ── */
+.bk-sticky-bar.bk-sticky-light.bk-rolled {
+  box-shadow:
+    -10px 0 30px rgba(0,0,0,0.1),
+    -3px 0 8px rgba(0,0,0,0.06),
+    0 2px 16px rgba(0,0,0,0.08),
+    inset 3px 0 8px rgba(0,0,0,0.04);
+}
+.bk-sticky-bar.bk-sticky-light::after {
+  background: linear-gradient(to right,
+    rgba(0,0,0,0.15) 0%,
+    rgba(0,0,0,0.06) 40%,
+    transparent 100%);
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-roll-tab {
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(154,128,32,0.06) 0%, transparent 70%),
+    linear-gradient(160deg, #fff 0%, #f7f5f2 100%);
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-roll-tab::before {
+  background: radial-gradient(ellipse at 60% 50%,
+    rgba(154,128,32,0.08) 0%,
+    transparent 70%);
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-roll-tab::after {
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(154,128,32,0.08) 10%,
+    rgba(154,128,32,0.25) 50%,
+    rgba(154,128,32,0.08) 90%,
+    transparent 100%);
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-roll-tab-icon {
+  filter: drop-shadow(0 0 5px rgba(154,128,32,0.3));
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-roll-dot {
+  background: rgba(154,128,32,0.35);
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-roll-star {
+  color: rgba(154,128,32,0.45);
+}
+
+/* ── Force-collapse chevron (left edge) ── */
+.bk-sbar-collapse {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to right,
+    rgba(245,200,66,0.08) 0%,
+    transparent 100%);
+  border: none;
+  border-right: 1px solid rgba(245,200,66,0.12);
+  color: rgba(245,200,66,0.55);
+  font-size: 1.35rem;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.25s, background 0.25s;
+  z-index: 6;
+}
+.bk-sbar-collapse:hover {
+  color: #F5C842;
+  background: linear-gradient(to right,
+    rgba(245,200,66,0.18) 0%,
+    rgba(245,200,66,0.04) 100%);
+}
+.bk-sticky-bar.bk-rolled .bk-sbar-collapse {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Light mode collapse button */
+.bk-sticky-bar.bk-sticky-light .bk-sbar-collapse {
+  background: linear-gradient(to right,
+    rgba(44,26,110,0.05) 0%,
+    transparent 100%);
+  border-right-color: rgba(0,0,0,0.08);
+  color: rgba(44,26,110,0.35);
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-collapse:hover {
+  color: #2c1a6e;
+  background: linear-gradient(to right,
+    rgba(44,26,110,0.1) 0%,
+    transparent 100%);
+}
+
+/* Crescent moon / star left accent — offset for collapse button */
+.bk-sbar-icon {
+  font-size: 1.4rem;
+  margin-right: 12px;
+  margin-left: 28px;
+  filter: drop-shadow(0 0 8px rgba(245,200,66,0.5));
+  flex-shrink: 0;
+}
+
+/* Greeting */
+.bk-sbar-greeting {
+  color: #F5C842;
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Divider */
+.bk-sbar-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(245,200,66,0.2);
+  margin: 0 18px;
+  flex-shrink: 0;
+}
+
+/* Prayer time block */
+.bk-sbar-block {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.bk-sbar-block-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.bk-sbar-block-text { display: flex; flex-direction: column; line-height: 1.2; }
+.bk-sbar-label {
+  font-size: 0.62rem;
+  color: rgba(255,235,180,0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+.bk-sbar-time {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #F5C842;
+  letter-spacing: 0.02em;
+}
+
+/* Meta info (date, city) */
+.bk-sbar-meta {
+  color: rgba(255,235,180,0.6);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+/* Ramadan day badge */
+.bk-sbar-ramadan {
+  background: rgba(245,200,66,0.12);
+  border: 1px solid rgba(245,200,66,0.3);
+  border-radius: 20px;
+  color: #F5C842;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Light theme */
+.bk-sticky-bar.bk-sticky-light {
+  background: #fff;
+  border-color: rgba(0,0,0,0.1);
+  color: #333;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+}
+.bk-sticky-bar.bk-sticky-light .bk-sbar-icon { filter: none; }
+.bk-sticky-bar.bk-sticky-light .bk-sbar-greeting { color: #1a0a3e; }
+.bk-sticky-bar.bk-sticky-light .bk-sbar-divider { background: rgba(0,0,0,0.12); }
+.bk-sticky-bar.bk-sticky-light .bk-sbar-meta { color: #666; }
+.bk-sticky-bar.bk-sticky-light .bk-sbar-label { color: #999; }
+.bk-sticky-bar.bk-sticky-light .bk-sbar-time { color: #2c1a6e; }
+.bk-sticky-bar.bk-sticky-light .bk-sbar-ramadan {
+  background: rgba(44,26,110,0.08);
+  border-color: rgba(44,26,110,0.2);
+  color: #2c1a6e;
+}
+
+@media (max-width: 720px) {
+  .bk-sbar-hide-sm { display: none !important; }
+}
+@media (max-width: 480px) {
+  .bk-sbar-hide-xs { display: none !important; }
+  .bk-sticky-bar { padding: 0 10px; }
+  .bk-sbar-greeting { font-size: 0.78rem; }
+  .bk-sbar-divider { margin: 0 10px; }
+  .bk-sbar-time { font-size: 0.88rem; }
+}

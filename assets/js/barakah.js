@@ -1103,9 +1103,138 @@
     }
   }
 
+  /* ── Sticky Prayer Bar ──────────────────────────────────────────────────── */
+
+  function initStickyBar() {
+    var config = (typeof barakahGreetingConfig !== "undefined") ? barakahGreetingConfig : null;
+    if (!config || config.stickyBar !== "1") return;
+
+    var timings = config.stickyTimings;
+    if (!timings || !timings.Fajr || !timings.Maghrib) return;
+
+    /* Apply caution adjustments */
+    var adjusted  = applyCautionTimings(timings);
+    var sehriTime = formatTime12(adjusted.Fajr);
+    var iftarTime = formatTime12(adjusted.Maghrib);
+    var greeting  = config.stickyGreeting || "Ramadan Mubarak!";
+    var posClass   = config.stickyPos === "header" ? "bk-sticky-top" : "bk-sticky-bottom";
+    var themeClass = config.stickyTheme === "light" ? "bk-sticky-light" : "";
+
+    /* Date & location info */
+    var dateData = config.stickyDate  || {};
+    var greg     = dateData.gregorian || {};
+    var hijri    = dateData.hijri     || {};
+    var city     = config.stickyCity  || "";
+
+    var weekday  = (greg.weekday && greg.weekday.en) ? greg.weekday.en.slice(0, 3) : "";
+    var gregDay  = greg.day || "";
+    var gregMon  = (greg.month && greg.month.en) ? greg.month.en.slice(0, 3) : "";
+    var dateStr  = weekday + (weekday ? " " : "") + gregDay + (gregDay ? " " : "") + gregMon;
+
+    /* Ramadan day count */
+    var hijriMonthNum = hijri.month ? parseInt(hijri.month.number || hijri.month.number, 10) : 0;
+    var isRamadan     = hijriMonthNum === 9;
+    var ramadanDay    = isRamadan ? applyHijriAdjust(parseInt(hijri.day, 10) || 1) : 0;
+
+    var bar = document.createElement("div");
+    bar.id        = "bk-sticky-bar";
+    bar.className = ("bk-sticky-bar " + posClass + (themeClass ? " " + themeClass : "")).trim();
+    bar.innerHTML =
+      '<span class="bk-sbar-icon">🌙</span>' +
+      '<span class="bk-sbar-greeting">' + escHtml(greeting) + '</span>' +
+      (dateStr ? '<span class="bk-sbar-divider bk-sbar-hide-xs"></span><span class="bk-sbar-meta bk-sbar-hide-xs">📅 ' + escHtml(dateStr) + '</span>' : '') +
+      (city ? '<span class="bk-sbar-divider bk-sbar-hide-sm"></span><span class="bk-sbar-meta bk-sbar-hide-sm">📍 ' + escHtml(city) + '</span>' : '') +
+      (isRamadan && ramadanDay > 0 ? '<span class="bk-sbar-divider bk-sbar-hide-xs"></span><span class="bk-sbar-ramadan bk-sbar-hide-xs">Ramadan Day ' + ramadanDay + '</span>' : '') +
+      '<span class="bk-sbar-divider"></span>' +
+      '<div class="bk-sbar-block">' +
+        '<span class="bk-sbar-block-icon">🌙</span>' +
+        '<div class="bk-sbar-block-text">' +
+          '<span class="bk-sbar-label">Sehri</span>' +
+          '<span class="bk-sbar-time">' + sehriTime + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<span class="bk-sbar-divider"></span>' +
+      '<div class="bk-sbar-block">' +
+        '<span class="bk-sbar-block-icon">🌅</span>' +
+        '<div class="bk-sbar-block-text">' +
+          '<span class="bk-sbar-label">Iftar</span>' +
+          '<span class="bk-sbar-time">' + iftarTime + '</span>' +
+        '</div>' +
+      '</div>';
+
+    /* ── Force-collapse chevron on the left side ── */
+    var collapseBtn = document.createElement("button");
+    collapseBtn.className = "bk-sbar-collapse";
+    collapseBtn.title = "Collapse";
+    collapseBtn.setAttribute("aria-label", "Collapse bar");
+    collapseBtn.innerHTML = '\u203A';
+    bar.insertBefore(collapseBtn, bar.firstChild);
+
+    document.body.appendChild(bar);
+
+    /* ── Roll tab element (visible at right edge when rolled) ── */
+    var tabEl = document.createElement("div");
+    tabEl.className = "bk-sbar-roll-tab";
+    tabEl.title = "Show prayer times";
+    tabEl.innerHTML =
+      '<span class="bk-sbar-roll-star">\u2726\u2726</span>' +
+      '<span class="bk-sbar-roll-tab-icon">\uD83C\uDF19</span>' +
+      '<div class="bk-sbar-roll-dots">' +
+        '<span class="bk-sbar-roll-dot"></span>' +
+        '<span class="bk-sbar-roll-dot"></span>' +
+        '<span class="bk-sbar-roll-dot"></span>' +
+      '</div>';
+    bar.appendChild(tabEl);
+
+    /* ── Roll / Unroll behaviour ── */
+    var INIT_DELAY = 10000;  /* ms before first auto-roll */
+    var HOVER_SHOW = 10000;  /* ms to stay open on hover / tap */
+    var rollTimer  = null;
+
+    function rollBar()  { bar.classList.add("bk-rolled"); }
+    function unrollBar() {
+      clearTimeout(rollTimer);
+      bar.classList.remove("bk-rolled");
+    }
+    function scheduleRoll(ms) {
+      clearTimeout(rollTimer);
+      rollTimer = setTimeout(rollBar, ms);
+    }
+
+    scheduleRoll(INIT_DELAY);
+
+    bar.addEventListener("mouseenter", function () {
+      unrollBar();
+    });
+    bar.addEventListener("mouseleave", function () {
+      scheduleRoll(HOVER_SHOW);
+    });
+
+    /* Tap support for touch devices */
+    tabEl.addEventListener("click", function (e) {
+      e.stopPropagation();
+      unrollBar();
+      scheduleRoll(HOVER_SHOW);
+    });
+
+    /* Force-collapse button */
+    collapseBtn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      rollBar();
+    });
+
+    /* Push body content so bar doesn't overlap */
+    if (config.stickyPos === "header") {
+      document.body.style.paddingTop = (parseFloat(document.body.style.paddingTop || 0) + 60) + "px";
+    } else {
+      document.body.style.paddingBottom = (parseFloat(document.body.style.paddingBottom || 0) + 60) + "px";
+    }
+  }
+
   function bootBarakah() {
     init();
     initGreeting();
+    initStickyBar();
   }
 
   if (document.readyState === "loading") {

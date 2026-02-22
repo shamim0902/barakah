@@ -46,13 +46,35 @@ function barakah_enqueue_frontend_assets() {
     $popup_page_ids_raw = get_option( 'barakah_greeting_popup_page_ids', '' );
     $popup_page_ids     = array_values( array_filter( array_map( 'absint', explode( ',', $popup_page_ids_raw ) ) ) );
 
+    // Fetch prayer times for sticky bar (cached via transients)
+    $sticky_timings = [];
+    $sticky_date    = [];
+    if ( get_option( 'barakah_sticky_bar', '0' ) === '1' ) {
+        $api         = Barakah_API::get_instance();
+        $prayer_data = $api->get_prayer_times(
+            get_option( 'barakah_city', 'Dhaka' ),
+            get_option( 'barakah_country', 'Bangladesh' ),
+            '',
+            (int) get_option( 'barakah_method', '1' )
+        );
+        $sticky_timings = isset( $prayer_data['timings'] ) ? $prayer_data['timings'] : [];
+        $sticky_date    = isset( $prayer_data['date'] )    ? $prayer_data['date']    : [];
+    }
+
     wp_localize_script( 'barakah-script', 'barakahGreetingConfig', [
-        'enabled'   => get_option( 'barakah_greeting_popup', '0' ),
-        'title'     => get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' ),
-        'msg'       => get_option( 'barakah_greeting_popup_msg',   'Wishing you and your family a blessed month of Ramadan!' ),
-        'scope'     => get_option( 'barakah_greeting_popup_scope', 'all' ),
-        'pageIds'   => $popup_page_ids,
-        'currentId' => (int) get_queried_object_id(),
+        'enabled'        => get_option( 'barakah_greeting_popup', '0' ),
+        'title'          => get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' ),
+        'msg'            => get_option( 'barakah_greeting_popup_msg',   'Wishing you and your family a blessed month of Ramadan!' ),
+        'scope'          => get_option( 'barakah_greeting_popup_scope', 'all' ),
+        'pageIds'        => $popup_page_ids,
+        'currentId'      => (int) get_queried_object_id(),
+        'stickyBar'      => get_option( 'barakah_sticky_bar', '0' ),
+        'stickyPos'      => get_option( 'barakah_sticky_position', 'footer' ),
+        'stickyGreeting' => get_option( 'barakah_sticky_greeting', 'Ramadan Mubarak! 🌙' ),
+        'stickyTimings'  => $sticky_timings,
+        'stickyDate'     => $sticky_date,
+        'stickyCity'     => get_option( 'barakah_city', 'Dhaka' ),
+        'stickyTheme'    => get_option( 'barakah_sticky_theme', 'dark' ),
     ] );
 }
 add_action( 'wp_enqueue_scripts', 'barakah_enqueue_frontend_assets' );
