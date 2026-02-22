@@ -112,10 +112,46 @@
   var monthCache    = null;
   var monthCacheKey = null;
   var allowLocationChange = (serverData && serverData.allowLocationChange === "1");
+  var hijriAdjustDir  = (serverData && serverData.hijriAdjustDirection) ? serverData.hijriAdjustDirection : "none";
+  var hijriAdjustDays = (serverData && serverData.hijriAdjustDays) ? parseInt(serverData.hijriAdjustDays, 10) : 0;
+  var sehriCautionMin = (serverData && serverData.sehriCautionMinutes) ? parseInt(serverData.sehriCautionMinutes, 10) : 0;
+  var iftarCautionMin = (serverData && serverData.iftarCautionMinutes) ? parseInt(serverData.iftarCautionMinutes, 10) : 0;
+  var greetingEscHandler  = null;
+  var greetingTimerId     = null;
+  var confettiRAF         = null;
+  var confettiPieces      = [];
 
   /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
   function pad(n) { return String(n).padStart(2, "0"); }
+
+  function adjustTimeStr(timeStr, offsetMin) {
+    if (!offsetMin) return timeStr;
+    var p = parseTime(timeStr);
+    var total = toMinutes(p.h, p.m) + offsetMin;
+    if (total < 0)    total += 1440;
+    if (total >= 1440) total -= 1440;
+    var nh = Math.floor(total / 60);
+    var nm = total % 60;
+    return pad(nh) + ":" + pad(nm);
+  }
+
+  function applyCautionTimings(timings) {
+    var adjusted = {};
+    for (var key in timings) {
+      if (timings.hasOwnProperty(key)) adjusted[key] = timings[key];
+    }
+    if (sehriCautionMin > 0) adjusted.Fajr    = adjustTimeStr(adjusted.Fajr, -sehriCautionMin);
+    if (iftarCautionMin > 0) adjusted.Maghrib = adjustTimeStr(adjusted.Maghrib, iftarCautionMin);
+    return adjusted;
+  }
+
+  function applyHijriAdjust(day) {
+    if (hijriAdjustDir === "none" || hijriAdjustDays === 0) return day;
+    if (hijriAdjustDir === "after")  return day - hijriAdjustDays;
+    if (hijriAdjustDir === "before") return day + hijriAdjustDays;
+    return day;
+  }
 
   // Strip timezone suffix: "05:08 (+06)" → {h:5, m:8}
   function parseTime(t) {
@@ -175,11 +211,13 @@
   /* ── Main render ─────────────────────────────────────────────────────────── */
 
   function renderWidget(container, data, city, country, method) {
-    var timings    = data.timings;
+    var timings    = applyCautionTimings(data.timings);
     var hijri      = data.date.hijri;
     var gregorian  = data.date.gregorian;
-    var ramadanDay = parseInt(hijri.day, 10) || 1;
-    var hijriLabel = hijri.day + " " + hijri.month.en + " " + hijri.year + " AH";
+    var rawHijriDay = parseInt(hijri.day, 10) || 1;
+    var ramadanDay  = applyHijriAdjust(rawHijriDay);
+    var displayHijriDay = (hijriAdjustDir !== "none" && hijriAdjustDays > 0) ? ramadanDay : rawHijriDay;
+    var hijriLabel = displayHijriDay + " " + hijri.month.en + " " + hijri.year + " AH";
     var dateLabel  = gregorian.weekday.en + ", " + gregorian.day + " " + gregorian.month.en + " " + gregorian.year;
 
     /* Prayer list definition */
@@ -730,43 +768,39 @@
       }
     }
 
-    var rows = data.map(function (day) {
+    var rows = [];
+    for (var di = 0; di < data.length; di++) {
+      var day   = data[di];
       var greg      = day.date.gregorian;
       var hijri     = day.date.hijri;
-      var t         = day.timings;
+      var t         = applyCautionTimings(day.timings);
       var isToday   = greg.date === todayStr;
-      var hijriDay   = parseInt(hijri.day, 10);
+      var hijriDay   = applyHijriAdjust(parseInt(hijri.day, 10));
+      if (hijriDay <= 0) continue;
       var weekday    = greg.weekday ? greg.weekday.en.slice(0, 3) : "";
       var gregMonth  = greg.month ? greg.month.en.slice(0, 3) : "";
       var gregDay    = pad(parseInt(greg.day, 10));
       var hijriMonth = (hijri.month && hijri.month.en) ? hijri.month.en : "";
-      /* Date cell: Gregorian line + Hijri line stacked */
       var dateTd =
-        '<span class="bk-mdate-greg">' + weekday + ' ' + gregDay + ' ' + gregMonth + '</span>' +
-        '<span class="bk-mdate-hijri">' + hijriDay + ' ' + escHtml(hijriMonth) + '</span>';
-      return (
+        '<span class="bk-mdate-hijri">' + hijriDay + ' ' + escHtml(hijriMonth) + '</span>' +
+        '<span class="bk-mdate-greg">' + weekday + ' ' + gregDay + ' ' + gregMonth + '</span>';
+      rows.push(
         '<tr class="' + (isToday ? "bk-mrow-today" : "") + '">' +
           '<td>' + dateTd + '</td>' +
           '<td class="bk-mcell-fajr">'    + formatTime12(t.Fajr)    + '</td>' +
-          '<td>'                           + formatTime12(t.Dhuhr)   + '</td>' +
-          '<td>'                           + formatTime12(t.Asr)     + '</td>' +
           '<td class="bk-mcell-maghrib">' + formatTime12(t.Maghrib) + '</td>' +
-          '<td>'                           + formatTime12(t.Isha)    + '</td>' +
         '</tr>'
       );
-    }).join("");
+    }
 
     scr.innerHTML =
       '<table class="bk-month-table">' +
         '<thead><tr>' +
           '<th>Date</th>' +
-          '<th>\uD83C\uDF19 Fajr</th>' +
-          '<th>\u2600\uFE0F Dhuhr</th>' +
-          '<th>Asr</th>' +
-          '<th>\uD83C\uDF07 Maghrib</th>' +
-          '<th>\uD83C\uDF03 Isha</th>' +
+          '<th>\uD83C\uDF19 Sehri Last Time</th>' +
+          '<th>\uD83C\uDF07 Iftar Time</th>' +
         '</tr></thead>' +
-        '<tbody>' + rows + '</tbody>' +
+        '<tbody>' + rows.join("") + '</tbody>' +
       '</table>';
 
     var todayRow = scr.querySelector(".bk-mrow-today");
@@ -922,6 +956,141 @@
     if (e.key === "Escape") closeLocationModal();
   }
 
+  /* ── Global Greeting Popup ──────────────────────────────────────────────── */
+
+  function initGreeting() {
+    var config = (typeof barakahGreetingConfig !== "undefined") ? barakahGreetingConfig : null;
+    if (!config || config.enabled !== "1") return;
+
+    var GREETING_KEY = "barakah_greeting_ts";
+    var ONE_HOUR_MS  = 60 * 60 * 1000;
+    var lastShown    = null;
+    try { lastShown = localStorage.getItem(GREETING_KEY); } catch (e) { /* silent */ }
+
+    var now = Date.now();
+    if (lastShown && (now - parseInt(lastShown, 10)) <= ONE_HOUR_MS) return;
+
+    openGreetingPopup(config);
+    try { localStorage.setItem(GREETING_KEY, String(now)); } catch (e) { /* silent */ }
+  }
+
+  function openGreetingPopup(config) {
+    var existing = document.getElementById("bk-greeting-overlay");
+    if (existing) existing.remove();
+
+    var overlay = document.createElement("div");
+    overlay.id        = "bk-greeting-overlay";
+    overlay.className = "bk-greeting-overlay";
+    overlay.innerHTML =
+      '<canvas id="bk-confetti-canvas" class="bk-confetti-canvas"></canvas>' +
+      '<div class="bk-greeting-panel">' +
+        '<button class="bk-greeting-close" id="bk-greeting-close" aria-label="Close">\u2715</button>' +
+        '<div class="bk-greeting-deco">' +
+          '<div class="bk-greeting-moon">\uD83C\uDF19</div>' +
+        '</div>' +
+        '<div class="bk-greeting-kareem">\u0631\u0645\u0636\u0627\u0646 \u0643\u0631\u064A\u0645</div>' +
+        '<div class="bk-greeting-title">' + escHtml(config.title) + '</div>' +
+        (config.msg ? '<div class="bk-greeting-msg">' + escHtml(config.msg) + '</div>' : '') +
+        '<button class="bk-greeting-btn" id="bk-greeting-btn">Continue \u2192</button>' +
+      '</div>';
+
+    document.body.appendChild(overlay);
+    document.getElementById("bk-greeting-close").addEventListener("click", closeGreetingPopup);
+    document.getElementById("bk-greeting-btn").addEventListener("click", closeGreetingPopup);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeGreetingPopup(); });
+    greetingEscHandler = onGreetingEsc;
+    document.addEventListener("keydown", greetingEscHandler);
+    greetingTimerId = setTimeout(closeGreetingPopup, 8000);
+
+    var canvas = document.getElementById("bk-confetti-canvas");
+    if (canvas) startConfetti(canvas);
+  }
+
+  function closeGreetingPopup() {
+    if (greetingTimerId) { clearTimeout(greetingTimerId); greetingTimerId = null; }
+    stopConfetti();
+    var overlay = document.getElementById("bk-greeting-overlay");
+    if (overlay) overlay.remove();
+    if (greetingEscHandler) {
+      document.removeEventListener("keydown", greetingEscHandler);
+      greetingEscHandler = null;
+    }
+  }
+
+  function onGreetingEsc(e) {
+    if (e.key === "Escape") closeGreetingPopup();
+  }
+
+  function startConfetti(canvas) {
+    var colors = ["#F5C842","#e74c3c","#2ecc71","#3498db","#f39c12","#9b59b6","#ff6b6b","#4ecdc4","#45b7d1","#fff","#fd79a8"];
+    var ctx    = canvas.getContext("2d");
+    var active = true;
+    confettiPieces = [];
+
+    // Seed initial scatter across top portion of viewport
+    for (var i = 0; i < 140; i++) {
+      confettiPieces.push(mkConfettiPiece(colors, true));
+    }
+
+    // Stop spawning new pieces after 3 s
+    var spawnStop = setTimeout(function () { active = false; }, 3000);
+
+    function frame() {
+      var W = canvas.width  = window.innerWidth;
+      var H = canvas.height = window.innerHeight;
+      ctx.clearRect(0, 0, W, H);
+
+      // Trickle in extra pieces while active
+      if (active && confettiPieces.length < 220) {
+        for (var n = 0; n < 4; n++) confettiPieces.push(mkConfettiPiece(colors, false));
+      }
+
+      for (var k = confettiPieces.length - 1; k >= 0; k--) {
+        var p = confettiPieces[k];
+        p.vy += 0.07;                                   // gravity
+        p.y  += p.vy;
+        p.x  += p.vx + Math.sin(p.y * 0.013) * 0.8;   // gentle sway
+        p.rot += p.rs;
+        if (p.y > H + 20) { confettiPieces.splice(k, 1); continue; }
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.globalAlpha = p.a;
+        ctx.fillStyle   = p.c;
+        ctx.fillRect(-p.w * 0.5, -p.h * 0.5, p.w, p.h);
+        ctx.restore();
+      }
+
+      if (confettiPieces.length > 0 || active) {
+        confettiRAF = requestAnimationFrame(frame);
+      } else {
+        confettiRAF = null;
+        clearTimeout(spawnStop);
+      }
+    }
+    confettiRAF = requestAnimationFrame(frame);
+  }
+
+  function mkConfettiPiece(colors, scatter) {
+    return {
+      x:   Math.random() * window.innerWidth,
+      y:   scatter ? (Math.random() * -300 - 10) : -10,
+      vx:  (Math.random() - 0.5) * 3.5,
+      vy:  Math.random() * 2 + 1.5,
+      rot: Math.random() * Math.PI * 2,
+      rs:  (Math.random() - 0.5) * 0.16,
+      c:   colors[Math.floor(Math.random() * colors.length)],
+      w:   Math.random() * 7 + 4,
+      h:   Math.random() * 12 + 5,
+      a:   Math.random() * 0.45 + 0.55
+    };
+  }
+
+  function stopConfetti() {
+    if (confettiRAF) { cancelAnimationFrame(confettiRAF); confettiRAF = null; }
+    confettiPieces = [];
+  }
+
   /* ── Boot ────────────────────────────────────────────────────────────────── */
 
   function init() {
@@ -946,10 +1115,15 @@
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
+  function bootBarakah() {
     init();
+    initGreeting();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", bootBarakah);
+  } else {
+    bootBarakah();
   }
 
 })();

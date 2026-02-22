@@ -80,6 +80,33 @@ function barakah_settings_page() {
                 $greeting = sanitize_text_field( wp_unslash( $_POST['barakah_greeting'] ?? '' ) );
                 update_option( 'barakah_greeting', $greeting );
 
+                $greeting_popup = isset( $_POST['barakah_greeting_popup'] ) ? '1' : '0';
+                update_option( 'barakah_greeting_popup', $greeting_popup );
+
+                $greeting_popup_title = sanitize_text_field( wp_unslash( $_POST['barakah_greeting_popup_title'] ?? '' ) );
+                update_option( 'barakah_greeting_popup_title', $greeting_popup_title );
+
+                $greeting_popup_msg = sanitize_textarea_field( wp_unslash( $_POST['barakah_greeting_popup_msg'] ?? '' ) );
+                update_option( 'barakah_greeting_popup_msg', $greeting_popup_msg );
+
+                $hijri_adjust_dir  = sanitize_text_field( wp_unslash( $_POST['barakah_hijri_adjust_direction'] ?? 'none' ) );
+                if ( ! in_array( $hijri_adjust_dir, [ 'none', 'before', 'after' ], true ) ) {
+                    $hijri_adjust_dir = 'none';
+                }
+                update_option( 'barakah_hijri_adjust_direction', $hijri_adjust_dir );
+
+                $hijri_adjust_days = (int) sanitize_text_field( wp_unslash( $_POST['barakah_hijri_adjust_days'] ?? '0' ) );
+                $hijri_adjust_days = max( 0, min( 3, $hijri_adjust_days ) );
+                update_option( 'barakah_hijri_adjust_days', $hijri_adjust_days );
+
+                $sehri_caution = (int) sanitize_text_field( wp_unslash( $_POST['barakah_sehri_caution_minutes'] ?? '0' ) );
+                $sehri_caution = max( 0, min( 60, $sehri_caution ) );
+                update_option( 'barakah_sehri_caution_minutes', $sehri_caution );
+
+                $iftar_caution = (int) sanitize_text_field( wp_unslash( $_POST['barakah_iftar_caution_minutes'] ?? '0' ) );
+                $iftar_caution = max( 0, min( 60, $iftar_caution ) );
+                update_option( 'barakah_iftar_caution_minutes', $iftar_caution );
+
                 Barakah_API::flush_cache();
                 $saved = true;
             }
@@ -94,6 +121,13 @@ function barakah_settings_page() {
     $allow_location_change = get_option( 'barakah_allow_location_change', '0' );
     $header_greeting = get_option( 'barakah_header_greeting', '' );
     $greeting        = get_option( 'barakah_greeting', '' );
+    $greeting_popup       = get_option( 'barakah_greeting_popup', '0' );
+    $greeting_popup_title = get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' );
+    $greeting_popup_msg   = get_option( 'barakah_greeting_popup_msg', 'Wishing you and your family a blessed month of Ramadan!' );
+    $hijri_adjust_dir     = get_option( 'barakah_hijri_adjust_direction', 'none' );
+    $hijri_adjust_days    = (int) get_option( 'barakah_hijri_adjust_days', 0 );
+    $sehri_caution        = (int) get_option( 'barakah_sehri_caution_minutes', 0 );
+    $iftar_caution        = (int) get_option( 'barakah_iftar_caution_minutes', 0 );
     $methods     = barakah_get_methods();
     ?>
     <style>
@@ -338,6 +372,87 @@ function barakah_settings_page() {
                 </div>
             </div>
 
+            <!-- Hijri Calendar Adjustment -->
+            <div class="bk-card-wrap">
+                <h2><span class="dashicons dashicons-calendar-alt"></span> Hijri Calendar Adjustment</h2>
+                <div class="bk-field">
+                    <label>Adjust Arabic calendar for my location</label>
+                    <div class="description" style="margin-bottom:10px;">
+                        In some regions (e.g. Bangladesh, parts of South Asia), the moon is sighted a day later than the standard calendar. Use this setting to adjust the Hijri day count accordingly.
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                            <input type="radio" name="barakah_hijri_adjust_direction" value="none" <?php checked( $hijri_adjust_dir, 'none' ); ?> />
+                            No adjustment (use standard calendar)
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                            <input type="radio" name="barakah_hijri_adjust_direction" value="before" <?php checked( $hijri_adjust_dir, 'before' ); ?> />
+                            Day(s) before — moon sighted earlier in my region
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                            <input type="radio" name="barakah_hijri_adjust_direction" value="after" <?php checked( $hijri_adjust_dir, 'after' ); ?> />
+                            Day(s) after — moon sighted later in my region (e.g. Bangladesh)
+                        </label>
+                    </div>
+                </div>
+                <div class="bk-field">
+                    <label for="barakah_hijri_adjust_days">Number of days to adjust</label>
+                    <input
+                        type="number"
+                        id="barakah_hijri_adjust_days"
+                        name="barakah_hijri_adjust_days"
+                        value="<?php echo esc_attr( $hijri_adjust_days ); ?>"
+                        min="0"
+                        max="3"
+                        style="max-width: 120px;"
+                    />
+                    <div class="description">
+                        How many days to shift the Hijri calendar. For Bangladesh, select "Day(s) after" with value 1.
+                        Range: 0–3 days.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Caution Time Adjustment -->
+            <div class="bk-card-wrap">
+                <h2><span class="dashicons dashicons-warning"></span> Caution Time for My Region</h2>
+                <div class="description" style="margin-bottom:16px;">
+                    Adjust Sehri and Iftar times to add a safety margin. Sehri time will be moved earlier and Iftar time will be moved later by the specified minutes.
+                </div>
+                <div class="bk-field-row">
+                    <div class="bk-field">
+                        <label for="barakah_sehri_caution_minutes">Sehri time adjustment (minutes)</label>
+                        <input
+                            type="number"
+                            id="barakah_sehri_caution_minutes"
+                            name="barakah_sehri_caution_minutes"
+                            value="<?php echo esc_attr( $sehri_caution ); ?>"
+                            min="0"
+                            max="60"
+                            style="max-width: 120px;"
+                        />
+                        <div class="description">
+                            Minutes to subtract from Fajr/Sehri time. E.g. 5 means Sehri ends 5 min before Fajr adhan.
+                        </div>
+                    </div>
+                    <div class="bk-field">
+                        <label for="barakah_iftar_caution_minutes">Iftar time adjustment (minutes)</label>
+                        <input
+                            type="number"
+                            id="barakah_iftar_caution_minutes"
+                            name="barakah_iftar_caution_minutes"
+                            value="<?php echo esc_attr( $iftar_caution ); ?>"
+                            min="0"
+                            max="60"
+                            style="max-width: 120px;"
+                        />
+                        <div class="description">
+                            Minutes to add to Maghrib/Iftar time. E.g. 3 means Iftar starts 3 min after Maghrib adhan.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Cache Settings -->
             <div class="bk-card-wrap">
                 <h2><span class="dashicons dashicons-performance"></span> Cache Settings</h2>
@@ -413,6 +528,42 @@ function barakah_settings_page() {
                     <div class="description">
                         Shown below "Ramadan Kareem" in the widget footer. Leave empty to hide.
                     </div>
+                </div>
+            </div>
+
+            <!-- Global Greeting Popup -->
+            <div class="bk-card-wrap">
+                <h2><span class="dashicons dashicons-megaphone"></span> Global Greeting Popup</h2>
+                <div class="bk-field">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" name="barakah_greeting_popup" value="1" <?php checked( $greeting_popup, '1' ); ?> />
+                        Enable Global Greeting Popup
+                    </label>
+                    <div class="description">
+                        Shows a Ramadan celebration popup on every page — once per hour per visitor. No shortcode needed.
+                    </div>
+                </div>
+                <div class="bk-field" style="margin-top:14px;">
+                    <label for="barakah_greeting_popup_title">Popup Title</label>
+                    <input
+                        type="text"
+                        id="barakah_greeting_popup_title"
+                        name="barakah_greeting_popup_title"
+                        value="<?php echo esc_attr( $greeting_popup_title ); ?>"
+                        placeholder="رمضان مبارك · Ramadan Mubarak 🌙"
+                    />
+                    <div class="description">Main heading shown in the popup. Supports Arabic and emoji.</div>
+                </div>
+                <div class="bk-field" style="margin-top:14px;">
+                    <label for="barakah_greeting_popup_msg">Popup Message</label>
+                    <textarea
+                        id="barakah_greeting_popup_msg"
+                        name="barakah_greeting_popup_msg"
+                        rows="3"
+                        style="width:100%;max-width:420px;padding:9px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;background:#fafafa;font-family:inherit;resize:vertical;"
+                        placeholder="Wishing you and your family a blessed month of Ramadan!"
+                    ><?php echo esc_textarea( $greeting_popup_msg ); ?></textarea>
+                    <div class="description">Supporting message below the title. Leave empty to hide.</div>
                 </div>
             </div>
 

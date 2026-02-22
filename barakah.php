@@ -3,7 +3,7 @@
  * Plugin Name:  Barakah – Ramadan Prayer Times
  * Plugin URI:   https://github.com/your-repo/barakah
  * Description:  A beautiful Ramadan prayer-times widget. Use [barakah] on any page or post.
- * Version:      1.0.2
+ * Version:      1.0.3
  * Author:       Barakah Team
  * License:      GPL-2.0+
  * Text Domain:  barakah
@@ -40,6 +40,13 @@ function barakah_enqueue_frontend_assets() {
         BARAKAH_VERSION,
         true   // load in footer
     );
+
+    // Global greeting popup config — available on every page
+    wp_localize_script( 'barakah-script', 'barakahGreetingConfig', [
+        'enabled' => get_option( 'barakah_greeting_popup', '0' ),
+        'title'   => get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' ),
+        'msg'     => get_option( 'barakah_greeting_popup_msg',   'Wishing you and your family a blessed month of Ramadan!' ),
+    ] );
 }
 add_action( 'wp_enqueue_scripts', 'barakah_enqueue_frontend_assets' );
 
@@ -48,10 +55,14 @@ add_action( 'wp_enqueue_scripts', 'barakah_enqueue_frontend_assets' );
 register_activation_hook( __FILE__, 'barakah_activate' );
 function barakah_activate() {
     $defaults = [
-        'barakah_city'        => 'Dhaka',
-        'barakah_country'     => 'Bangladesh',
-        'barakah_method'      => '1',
-        'barakah_cache_hours' => 6,
+        'barakah_city'                 => 'Dhaka',
+        'barakah_country'              => 'Bangladesh',
+        'barakah_method'               => '1',
+        'barakah_cache_hours'          => 6,
+        'barakah_hijri_adjust_direction'  => 'none',
+        'barakah_hijri_adjust_days'      => 0,
+        'barakah_sehri_caution_minutes'  => 0,
+        'barakah_iftar_caution_minutes'  => 0,
     ];
     foreach ( $defaults as $key => $value ) {
         if ( get_option( $key ) === false ) {

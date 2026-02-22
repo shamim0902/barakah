@@ -42,6 +42,10 @@ function barakah_render_shortcode( $atts ) {
         'headerGreeting'      => get_option( 'barakah_header_greeting', '' ),
         'greeting'            => get_option( 'barakah_greeting', '' ),
         'allowLocationChange' => get_option( 'barakah_allow_location_change', '0' ),
+        'hijriAdjustDirection'  => get_option( 'barakah_hijri_adjust_direction', 'none' ),
+        'hijriAdjustDays'       => (int) get_option( 'barakah_hijri_adjust_days', 0 ),
+        'sehriCautionMinutes'   => (int) get_option( 'barakah_sehri_caution_minutes', 0 ),
+        'iftarCautionMinutes'   => (int) get_option( 'barakah_iftar_caution_minutes', 0 ),
     ] );
 
     ob_start();
