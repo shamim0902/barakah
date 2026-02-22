@@ -148,6 +148,20 @@
   color: rgba(255,235,180,0.4);
   font-family: 'Amiri', serif; font-size: 0.8rem; letter-spacing: 0.03em;
 }
+.bk-header-kareem {
+  margin-top: 6px;
+  font-family: 'Amiri', serif;
+  font-size: 0.72rem;
+  color: rgba(255,235,180,0.3);
+  letter-spacing: 0.04em;
+}
+.bk-header-greeting {
+  margin-top: 4px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255,235,180,0.45);
+  letter-spacing: 0.02em;
+}
 
 /* ── Sehri & Iftar cards ──────────────────────────────────────────────────── */
 
@@ -394,6 +408,13 @@
   font-size: 0.65rem; letter-spacing: 0.06em;
   font-family: 'Amiri', serif;
 }
+.bk-footer-greeting {
+  margin-top: 4px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.7rem;
+  color: rgba(255,235,180,0.35);
+  letter-spacing: 0.02em;
+}
 
 /* ══════════════════════════════════════════════════════════════════════════
    LIGHT MODE — activated via [barakah mode=light]
@@ -444,6 +465,8 @@
 .bk-root.bk-light .bk-location { color: #5a5548; }
 .bk-root.bk-light .bk-clock    { color: #111122; }
 .bk-root.bk-light .bk-hijri    { color: #6a6040; }
+.bk-root.bk-light .bk-header-kareem   { color: #8a8070; }
+.bk-root.bk-light .bk-header-greeting { color: #9a9080; }
 
 /* Sehri & Iftar cards */
 .bk-root.bk-light .bk-card {
@@ -567,6 +590,7 @@
 
 /* Footer */
 .bk-root.bk-light .bk-footer { color: #8a8070; }
+.bk-root.bk-light .bk-footer-greeting { color: #9a9080; }
 
 /* Crescent SVG fill */
 .bk-root.bk-light .bk-crescent path { fill: #9a8020; }
@@ -857,6 +881,40 @@
   background: rgba(154,128,32,0.12);
   border-color: rgba(154,128,32,0.25);
   color: #7a6518;
+}
+
+/* ── Two-Column Layout ────────────────────────────────────────────────────── */
+
+.bk-two-col { max-width: 960px; }
+
+.bk-two-col .bk-col-left,
+.bk-two-col .bk-col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .bk-body.bk-two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 18px;
+  }
+  .bk-two-col > .bk-header,
+  .bk-two-col > .bk-footer { grid-column: 1 / -1; }
+  .bk-two-col > .bk-header .bk-logo-row { justify-content: center; }
+  .bk-two-col > .bk-header .bk-day-badge { display: none; }
+  .bk-two-col > .bk-header .bk-location { justify-content: center; }
+  .bk-two-col > .bk-col-left  { grid-column: 1; }
+  .bk-two-col > .bk-col-right { grid-column: 2; }
+}
+
+@media (max-width: 767px) {
+  .bk-body.bk-two-col { max-width: 480px; }
+  .bk-two-col .bk-col-left,
+  .bk-two-col .bk-col-right {
+    display: contents;
+  }
 }
 
 /* ── Responsive tweaks ────────────────────────────────────────────────────── */

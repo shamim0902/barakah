@@ -68,6 +68,15 @@ function barakah_settings_page() {
                 $cache_hours = max( 1, min( 168, $cache_hours ) );
                 update_option( 'barakah_cache_hours', $cache_hours );
 
+                $two_column = isset( $_POST['barakah_two_column'] ) ? '1' : '0';
+                update_option( 'barakah_two_column', $two_column );
+
+                $header_greeting = sanitize_text_field( wp_unslash( $_POST['barakah_header_greeting'] ?? '' ) );
+                update_option( 'barakah_header_greeting', $header_greeting );
+
+                $greeting = sanitize_text_field( wp_unslash( $_POST['barakah_greeting'] ?? '' ) );
+                update_option( 'barakah_greeting', $greeting );
+
                 Barakah_API::flush_cache();
                 $saved = true;
             }
@@ -78,6 +87,9 @@ function barakah_settings_page() {
     $country     = get_option( 'barakah_country',     'Bangladesh' );
     $method      = get_option( 'barakah_method',      '1' );
     $cache_hours = (int) get_option( 'barakah_cache_hours', 6 );
+    $two_column  = get_option( 'barakah_two_column', '0' );
+    $header_greeting = get_option( 'barakah_header_greeting', '' );
+    $greeting        = get_option( 'barakah_greeting', '' );
     $methods     = barakah_get_methods();
     ?>
     <style>
@@ -340,6 +352,52 @@ function barakah_settings_page() {
                         Prayer times are cached server-side to reduce API calls.
                         Range: 1–168 hours (1 hour to 1 week). Default: 6 hours.
                         Cache is automatically cleared when settings are saved.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layout Settings -->
+            <div class="bk-card-wrap">
+                <h2><span class="dashicons dashicons-layout"></span> Layout Settings</h2>
+                <div class="bk-field">
+                    <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" name="barakah_two_column" value="1" <?php checked( $two_column, '1' ); ?> />
+                        Show 2 Column Layout
+                    </label>
+                    <div class="description">
+                        On large screens (&ge;768px), prayer times and duas display side by side.
+                        Mobile devices always use single column.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Greeting Messages -->
+            <div class="bk-card-wrap">
+                <h2><span class="dashicons dashicons-format-quote"></span> Greeting Messages</h2>
+                <div class="bk-field">
+                    <label for="barakah_header_greeting">Header Greeting</label>
+                    <input
+                        type="text"
+                        id="barakah_header_greeting"
+                        name="barakah_header_greeting"
+                        value="<?php echo esc_attr( $header_greeting ); ?>"
+                        placeholder="e.g. Welcome to Our Mosque - Ramadan Mubarak!"
+                    />
+                    <div class="description">
+                        Shown below the Hijri date in the widget header. Leave empty to hide.
+                    </div>
+                </div>
+                <div class="bk-field" style="margin-top: 12px;">
+                    <label for="barakah_greeting">Footer Greeting</label>
+                    <input
+                        type="text"
+                        id="barakah_greeting"
+                        name="barakah_greeting"
+                        value="<?php echo esc_attr( $greeting ); ?>"
+                        placeholder="e.g. Ramadan Mubarak from Our Mosque!"
+                    />
+                    <div class="description">
+                        Shown below "Ramadan Kareem" in the widget footer. Leave empty to hide.
                     </div>
                 </div>
             </div>

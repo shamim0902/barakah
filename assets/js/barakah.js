@@ -207,7 +207,97 @@
     }).join("");
 
     var isLight  = container._bkMode === "light";
+    var twocol   = container.getAttribute("data-columns") === "1";
     var rootCls  = "bk-root" + (isLight ? " bk-light" : "");
+    var bodyCls  = "bk-body" + (twocol ? " bk-two-col" : "");
+
+    /* ── Left column: cards + countdown + prayer times ── */
+    var leftHtml =
+      /* ── Sehri & Iftar Cards ── */
+      '<div class="bk-main-cards bk-anim bk-d1">' +
+        '<div class="bk-card bk-card-sehri" id="bk-card-sehri">' +
+          '<div class="bk-card-emoji">🌙</div>' +
+          '<div class="bk-card-label">Sehri</div>' +
+          '<div class="bk-card-ar">الفجر</div>' +
+          '<div class="bk-card-time">' + formatTime12(timings.Fajr) + '</div>' +
+          '<div class="bk-badge bk-badge-blue" id="bk-badge-sehri">–</div>' +
+        '</div>' +
+        '<div class="bk-card bk-card-iftar" id="bk-card-iftar">' +
+          '<div class="bk-card-emoji">🌅</div>' +
+          '<div class="bk-card-label">Iftar</div>' +
+          '<div class="bk-card-ar">المغرب</div>' +
+          '<div class="bk-card-time">' + formatTime12(timings.Maghrib) + '</div>' +
+          '<div class="bk-badge bk-badge-orange" id="bk-badge-iftar">–</div>' +
+        '</div>' +
+      '</div>' +
+
+      /* ── Countdown ── */
+      '<div class="bk-countdown bk-anim bk-d2">' +
+        '<div>' +
+          '<div class="bk-cd-label">Next Prayer</div>' +
+          '<div class="bk-cd-name" id="bk-cd-name">—</div>' +
+          '<div class="bk-cd-arabic" id="bk-cd-arabic">—</div>' +
+        '</div>' +
+        '<div class="bk-cd-timer">' +
+          '<div class="bk-cd-timelabel">Remaining</div>' +
+          '<div class="bk-cd-display" id="bk-cd-display">00<span>h</span> 00<span>m</span> 00<span>s</span></div>' +
+        '</div>' +
+      '</div>' +
+
+      /* ── Full Prayer Times ── */
+      '<div class="bk-prayers bk-anim bk-d3">' +
+        '<div class="bk-section-head">' +
+          '<span>🕌</span> Prayer Times Today' +
+          '<button class="bk-month-btn" id="bk-month-btn" title="View full month prayer times">📅 Month</button>' +
+        '</div>' +
+        prayerRows +
+      '</div>';
+
+    /* ── Right column: dua cards ── */
+    var rightHtml =
+      /* ── Iftar Dua ── */
+      '<div class="bk-dua-card bk-dua-iftar bk-anim bk-d4">' +
+        '<div class="bk-dua-head"><span>🤲</span> Dua at Iftar</div>' +
+        '<div class="bk-dua-arabic">اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ</div>' +
+        '<div class="bk-dua-trans">Allahumma laka sumtu wa \'ala rizqika aftartu</div>' +
+        '<div class="bk-dua-meaning">"O Allah! For You I have fasted and upon Your provision I break my fast."</div>' +
+        '<div class="bk-dua-source">— Dua at Iftar · Abu Dawud</div>' +
+      '</div>' +
+
+      /* ── Daily Dua ── */
+      '<div class="bk-dua-card bk-anim bk-d5">' +
+        '<div class="bk-dua-top">' +
+          '<div class="bk-dua-head"><span>✨</span> Daily Dua &amp; Dhikr</div>' +
+          '<div class="bk-dua-controls">' +
+            '<div class="bk-dots" id="bk-dua-dots"></div>' +
+            '<button class="bk-refresh" id="bk-refresh" title="Next Dua" aria-label="Next Dua">&#8635;</button>' +
+          '</div>' +
+        '</div>' +
+        '<div id="bk-dua-body" class="bk-dua-body">' +
+          '<div class="bk-dua-arabic-box" id="bk-dua-arabic-text"></div>' +
+          '<div class="bk-dua-trans" id="bk-dua-trans"></div>' +
+          '<div class="bk-dua-meaning" id="bk-dua-meaning"></div>' +
+          '<div class="bk-dua-divider"><span id="bk-dua-source"></span></div>' +
+        '</div>' +
+      '</div>' +
+
+      /* ── Sehri Niyyah ── */
+      '<div class="bk-dua-card bk-dua-sehri bk-anim bk-d5">' +
+        '<div class="bk-dua-head"><span>🌙</span> Niyyah for Sehri</div>' +
+        '<div class="bk-dua-arabic">وَبِصَوْمِ غَدٍ نَّوَيْتُ مِنْ شَهْرِ رَمَضَانَ</div>' +
+        '<div class="bk-dua-trans">Wa bisawmi ghadin nawaytu min shahri Ramadan</div>' +
+        '<div class="bk-dua-meaning">"I intend to keep the fast for tomorrow in the month of Ramadan."</div>' +
+      '</div>';
+
+    /* ── Assemble body: wrap in column divs when two-col is on ── */
+    var bodyContent;
+    if (twocol) {
+      bodyContent =
+        '<div class="bk-col-left">' + leftHtml + '</div>' +
+        '<div class="bk-col-right">' + rightHtml + '</div>';
+    } else {
+      bodyContent = leftHtml + rightHtml;
+    }
 
     container.innerHTML =
       '<div class="' + rootCls + '">' +
@@ -215,7 +305,7 @@
         '<div class="bk-orb bk-orb1"></div>' +
         '<div class="bk-orb bk-orb2"></div>' +
 
-        '<div class="bk-body">' +
+        '<div class="' + bodyCls + '">' +
 
           /* ── Header ── */
           '<div class="bk-header bk-anim">' +
@@ -242,84 +332,21 @@
 
             '<div class="bk-clock" id="bk-clock">00:00:00</div>' +
             '<div class="bk-hijri">' + hijriLabel + '</div>' +
+            '<div class="bk-header-kareem">\u0631\u0645\u0636\u0627\u0646 \u0643\u0631\u064A\u0645 \u00B7 Ramadan Kareem \uD83C\uDF19</div>' +
+            (serverData && serverData.headerGreeting
+              ? '<div class="bk-header-greeting">' + escHtml(serverData.headerGreeting) + '</div>'
+              : '') +
           '</div>' +
 
-          /* ── Sehri & Iftar Cards ── */
-          '<div class="bk-main-cards bk-anim bk-d1">' +
-            '<div class="bk-card bk-card-sehri" id="bk-card-sehri">' +
-              '<div class="bk-card-emoji">🌙</div>' +
-              '<div class="bk-card-label">Sehri</div>' +
-              '<div class="bk-card-ar">الفجر</div>' +
-              '<div class="bk-card-time">' + formatTime12(timings.Fajr) + '</div>' +
-              '<div class="bk-badge bk-badge-blue" id="bk-badge-sehri">–</div>' +
-            '</div>' +
-            '<div class="bk-card bk-card-iftar" id="bk-card-iftar">' +
-              '<div class="bk-card-emoji">🌅</div>' +
-              '<div class="bk-card-label">Iftar</div>' +
-              '<div class="bk-card-ar">المغرب</div>' +
-              '<div class="bk-card-time">' + formatTime12(timings.Maghrib) + '</div>' +
-              '<div class="bk-badge bk-badge-orange" id="bk-badge-iftar">–</div>' +
-            '</div>' +
-          '</div>' +
-
-          /* ── Countdown ── */
-          '<div class="bk-countdown bk-anim bk-d2">' +
-            '<div>' +
-              '<div class="bk-cd-label">Next Prayer</div>' +
-              '<div class="bk-cd-name" id="bk-cd-name">—</div>' +
-              '<div class="bk-cd-arabic" id="bk-cd-arabic">—</div>' +
-            '</div>' +
-            '<div class="bk-cd-timer">' +
-              '<div class="bk-cd-timelabel">Remaining</div>' +
-              '<div class="bk-cd-display" id="bk-cd-display">00<span>h</span> 00<span>m</span> 00<span>s</span></div>' +
-            '</div>' +
-          '</div>' +
-
-          /* ── Full Prayer Times ── */
-          '<div class="bk-prayers bk-anim bk-d3">' +
-            '<div class="bk-section-head">' +
-              '<span>🕌</span> Prayer Times Today' +
-              '<button class="bk-month-btn" id="bk-month-btn" title="View full month prayer times">📅 Month</button>' +
-            '</div>' +
-            prayerRows +
-          '</div>' +
-
-          /* ── Iftar Dua ── */
-          '<div class="bk-dua-card bk-dua-iftar bk-anim bk-d4">' +
-            '<div class="bk-dua-head"><span>🤲</span> Dua at Iftar</div>' +
-            '<div class="bk-dua-arabic">اللَّهُمَّ لَكَ صُمْتُ وَعَلَى رِزْقِكَ أَفْطَرْتُ</div>' +
-            '<div class="bk-dua-trans">Allahumma laka sumtu wa \'ala rizqika aftartu</div>' +
-            '<div class="bk-dua-meaning">"O Allah! For You I have fasted and upon Your provision I break my fast."</div>' +
-            '<div class="bk-dua-source">— Dua at Iftar · Abu Dawud</div>' +
-          '</div>' +
-
-          /* ── Daily Dua ── */
-          '<div class="bk-dua-card bk-anim bk-d5">' +
-            '<div class="bk-dua-top">' +
-              '<div class="bk-dua-head"><span>✨</span> Daily Dua &amp; Dhikr</div>' +
-              '<div class="bk-dua-controls">' +
-                '<div class="bk-dots" id="bk-dua-dots"></div>' +
-                '<button class="bk-refresh" id="bk-refresh" title="Next Dua" aria-label="Next Dua">&#8635;</button>' +
-              '</div>' +
-            '</div>' +
-            '<div id="bk-dua-body" class="bk-dua-body">' +
-              '<div class="bk-dua-arabic-box" id="bk-dua-arabic-text"></div>' +
-              '<div class="bk-dua-trans" id="bk-dua-trans"></div>' +
-              '<div class="bk-dua-meaning" id="bk-dua-meaning"></div>' +
-              '<div class="bk-dua-divider"><span id="bk-dua-source"></span></div>' +
-            '</div>' +
-          '</div>' +
-
-          /* ── Sehri Niyyah ── */
-          '<div class="bk-dua-card bk-dua-sehri bk-anim bk-d5">' +
-            '<div class="bk-dua-head"><span>🌙</span> Niyyah for Sehri</div>' +
-            '<div class="bk-dua-arabic">وَبِصَوْمِ غَدٍ نَّوَيْتُ مِنْ شَهْرِ رَمَضَانَ</div>' +
-            '<div class="bk-dua-trans">Wa bisawmi ghadin nawaytu min shahri Ramadan</div>' +
-            '<div class="bk-dua-meaning">"I intend to keep the fast for tomorrow in the month of Ramadan."</div>' +
-          '</div>' +
+          bodyContent +
 
           /* ── Footer ── */
-          '<div class="bk-footer">رمضان كريم · Ramadan Kareem 🌙</div>' +
+          '<div class="bk-footer">' +
+            '\u0631\u0645\u0636\u0627\u0646 \u0643\u0631\u064A\u0645 \u00B7 Ramadan Kareem \uD83C\uDF19' +
+            (serverData && serverData.greeting
+              ? '<div class="bk-footer-greeting">' + escHtml(serverData.greeting) + '</div>'
+              : '') +
+          '</div>' +
 
         '</div>' + /* bk-body */
       '</div>';   /* bk-root */

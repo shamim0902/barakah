@@ -28,6 +28,7 @@ function barakah_render_shortcode( $atts ) {
     );
 
     $has_server_data = ! empty( $data['timings'] ) && empty( $data['error'] );
+    $two_col         = get_option( 'barakah_two_column', '0' );
 
     // Load Bangla duas
     $bangla_duas = $api->get_bangla_duas();
@@ -38,6 +39,8 @@ function barakah_render_shortcode( $atts ) {
         'date'       => isset( $data['date'] ) ? $data['date'] : [],
         'banglaDuas' => $bangla_duas,
         'hasData'    => $has_server_data,
+        'headerGreeting' => get_option( 'barakah_header_greeting', '' ),
+        'greeting'       => get_option( 'barakah_greeting', '' ),
     ] );
 
     ob_start();
@@ -48,6 +51,7 @@ function barakah_render_shortcode( $atts ) {
         data-country="<?php echo esc_attr( $atts['country'] ); ?>"
         data-method="<?php echo esc_attr( $atts['method'] ); ?>"
         data-mode="<?php echo esc_attr( $atts['mode'] ); ?>"
+        data-columns="<?php echo esc_attr( $two_col ); ?>"
     >
         <?php if ( ! $has_server_data ) : ?>
         <!-- Loading state (fallback when server-side fetch failed) -->
