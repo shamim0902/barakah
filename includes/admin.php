@@ -303,6 +303,13 @@ function barakah_settings_page() {
             </div>
         </div>
 
+        <div class="bk-notice" style="background:#f8f7ff;border-left:4px solid #6B8CDE;color:#1e1e3a;">
+            <strong>Setup Wizard:</strong>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=barakah-onboarding' ) ); ?>">
+                Run the setup wizard
+            </a> to quickly configure your prayer times step by step.
+        </div>
+
         <?php if ( $saved ) : ?>
             <div class="bk-notice bk-notice-success">✅ Settings saved successfully! The widget will now use the updated location.</div>
         <?php endif; ?>

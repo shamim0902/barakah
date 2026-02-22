@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:  Barakah – Ramadan Prayer Times
- * Plugin URI:   https://github.com/your-repo/barakah
+ * Plugin URI:   https://github.com/shamim0902/barakah
  * Description:  A beautiful Ramadan prayer-times widget. Use [barakah] on any page or post.
  * Version:      1.0.5
  * Author:       Barakah Team
@@ -21,6 +21,7 @@ define( 'BARAKAH_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once BARAKAH_PLUGIN_PATH . 'includes/class-barakah-api.php';
 require_once BARAKAH_PLUGIN_PATH . 'includes/admin.php';
+require_once BARAKAH_PLUGIN_PATH . 'includes/onboarding.php';
 require_once BARAKAH_PLUGIN_PATH . 'includes/shortcode.php';
 
 /* ── Assets ──────────────────────────────────────────────────────────────── */
@@ -69,6 +70,11 @@ function barakah_activate() {
             add_option( $key, $value );
         }
     }
+
+    /* Signal redirect to onboarding wizard for the activating user */
+    if ( ! get_option( 'barakah_onboarding_complete' ) ) {
+        set_transient( 'barakah_activation_redirect', get_current_user_id(), 30 );
+    }
 }
 
 /* ── Deactivation: flush cached data ────────────────────────────────────── */
@@ -97,3 +103,30 @@ add_action( 'update_option_barakah_city',        'barakah_flush_cache_on_save' )
 add_action( 'update_option_barakah_country',     'barakah_flush_cache_on_save' );
 add_action( 'update_option_barakah_method',      'barakah_flush_cache_on_save' );
 add_action( 'update_option_barakah_cache_hours', 'barakah_flush_cache_on_save' );
+
+/* ── Redirect to onboarding after first activation ─────────────────────── */
+
+add_action( 'admin_init', 'barakah_maybe_redirect_to_onboarding' );
+function barakah_maybe_redirect_to_onboarding() {
+    $user_id = get_transient( 'barakah_activation_redirect' );
+    if ( ! $user_id ) {
+        return;
+    }
+
+    delete_transient( 'barakah_activation_redirect' );
+
+    if ( get_option( 'barakah_onboarding_complete' ) ) {
+        return;
+    }
+
+    if ( wp_doing_ajax() || defined( 'WP_CLI' ) || isset( $_GET['activate-multi'] ) ) {
+        return;
+    }
+
+    if ( (int) $user_id !== get_current_user_id() ) {
+        return;
+    }
+
+    wp_safe_redirect( admin_url( 'admin.php?page=barakah-onboarding' ) );
+    exit;
+}
