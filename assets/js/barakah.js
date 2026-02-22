@@ -960,6 +960,14 @@
 
   function initGreeting() {
     var config = (typeof barakahGreetingConfig !== "undefined") ? barakahGreetingConfig : null;
+    var forceTest = (window.location.search.indexOf("barakah_test_popup=1") !== -1);
+
+    if (forceTest) {
+      var testConfig = config || { enabled: "1", title: "\u0631\u0645\u0636\u0627\u0646 \u0645\u0628\u0627\u0631\u0643 \u00B7 Ramadan Mubarak \uD83C\uDF19", msg: "Wishing you and your family a blessed month of Ramadan!" };
+      openGreetingPopup(testConfig);
+      return;
+    }
+
     if (!config || config.enabled !== "1") return;
 
     var GREETING_KEY = "barakah_greeting_ts";
@@ -984,23 +992,33 @@
     overlay.innerHTML =
       '<canvas id="bk-confetti-canvas" class="bk-confetti-canvas"></canvas>' +
       '<div class="bk-greeting-panel">' +
-        '<button class="bk-greeting-close" id="bk-greeting-close" aria-label="Close">\u2715</button>' +
         '<div class="bk-greeting-deco">' +
-          '<div class="bk-greeting-moon">\uD83C\uDF19</div>' +
+          '<div class="bk-greeting-ornament bk-greeting-ornament-l"></div>' +
+          '<div class="bk-greeting-ornament bk-greeting-ornament-r"></div>' +
+          '<div class="bk-greeting-moon">\u2604</div>' +
+          '<div class="bk-greeting-lanterns">' +
+            '<span class="bk-lantern bk-lantern-1"></span>' +
+            '<span class="bk-lantern bk-lantern-2"></span>' +
+            '<span class="bk-lantern bk-lantern-3"></span>' +
+          '</div>' +
         '</div>' +
+        '<div class="bk-greeting-bismillah">\u0628\u0650\u0633\u0645\u0650 \u0627\u0644\u0644\u0651\u0647\u0650 \u0627\u0644\u0631\u0651\u064E\u062D\u0645\u0670\u0646\u0650 \u0627\u0644\u0631\u0651\u064E\u062D\u0650\u064A\u0645\u0650</div>' +
         '<div class="bk-greeting-kareem">\u0631\u0645\u0636\u0627\u0646 \u0643\u0631\u064A\u0645</div>' +
         '<div class="bk-greeting-title">' + escHtml(config.title) + '</div>' +
         (config.msg ? '<div class="bk-greeting-msg">' + escHtml(config.msg) + '</div>' : '') +
-        '<button class="bk-greeting-btn" id="bk-greeting-btn">Continue \u2192</button>' +
+        '<div class="bk-greeting-border-art"></div>' +
       '</div>';
 
     document.body.appendChild(overlay);
-    document.getElementById("bk-greeting-close").addEventListener("click", closeGreetingPopup);
-    document.getElementById("bk-greeting-btn").addEventListener("click", closeGreetingPopup);
     overlay.addEventListener("click", function (e) { if (e.target === overlay) closeGreetingPopup(); });
     greetingEscHandler = onGreetingEsc;
     document.addEventListener("keydown", greetingEscHandler);
-    greetingTimerId = setTimeout(closeGreetingPopup, 8000);
+
+    /* Auto fade-out after 5s, then remove */
+    greetingTimerId = setTimeout(function () {
+      overlay.classList.add("bk-greeting-fadeout");
+      setTimeout(closeGreetingPopup, 800);
+    }, 5000);
 
     var canvas = document.getElementById("bk-confetti-canvas");
     if (canvas) startConfetti(canvas);
