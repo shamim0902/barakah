@@ -89,6 +89,19 @@ function barakah_settings_page() {
                 $greeting_popup_msg = sanitize_textarea_field( wp_unslash( $_POST['barakah_greeting_popup_msg'] ?? '' ) );
                 update_option( 'barakah_greeting_popup_msg', $greeting_popup_msg );
 
+                $greeting_popup_scope = sanitize_text_field( wp_unslash( $_POST['barakah_greeting_popup_scope'] ?? 'all' ) );
+                if ( ! in_array( $greeting_popup_scope, [ 'all', 'specific' ], true ) ) {
+                    $greeting_popup_scope = 'all';
+                }
+                update_option( 'barakah_greeting_popup_scope', $greeting_popup_scope );
+
+                $raw_ids = isset( $_POST['barakah_greeting_popup_page_ids'] ) && is_array( $_POST['barakah_greeting_popup_page_ids'] )
+                    ? $_POST['barakah_greeting_popup_page_ids']
+                    : [];
+                $clean_ids = array_map( 'absint', $raw_ids );
+                $clean_ids = array_filter( $clean_ids );
+                update_option( 'barakah_greeting_popup_page_ids', implode( ',', $clean_ids ) );
+
                 $hijri_adjust_dir  = sanitize_text_field( wp_unslash( $_POST['barakah_hijri_adjust_direction'] ?? 'none' ) );
                 if ( ! in_array( $hijri_adjust_dir, [ 'none', 'before', 'after' ], true ) ) {
                     $hijri_adjust_dir = 'none';
@@ -121,9 +134,13 @@ function barakah_settings_page() {
     $allow_location_change = get_option( 'barakah_allow_location_change', '0' );
     $header_greeting = get_option( 'barakah_header_greeting', '' );
     $greeting        = get_option( 'barakah_greeting', '' );
-    $greeting_popup       = get_option( 'barakah_greeting_popup', '0' );
-    $greeting_popup_title = get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' );
-    $greeting_popup_msg   = get_option( 'barakah_greeting_popup_msg', 'Wishing you and your family a blessed month of Ramadan!' );
+    $greeting_popup            = get_option( 'barakah_greeting_popup', '0' );
+    $greeting_popup_title      = get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' );
+    $greeting_popup_msg        = get_option( 'barakah_greeting_popup_msg', 'Wishing you and your family a blessed month of Ramadan!' );
+    $greeting_popup_scope      = get_option( 'barakah_greeting_popup_scope', 'all' );
+    $greeting_popup_page_ids   = get_option( 'barakah_greeting_popup_page_ids', '' );
+    $selected_page_ids         = array_filter( array_map( 'absint', explode( ',', $greeting_popup_page_ids ) ) );
+    $all_pages                 = get_pages( [ 'sort_column' => 'post_title', 'sort_order' => 'ASC' ] );
     $hijri_adjust_dir     = get_option( 'barakah_hijri_adjust_direction', 'none' );
     $hijri_adjust_days    = (int) get_option( 'barakah_hijri_adjust_days', 0 );
     $sehri_caution        = (int) get_option( 'barakah_sehri_caution_minutes', 0 );
@@ -133,85 +150,83 @@ function barakah_settings_page() {
     <style>
         /* ── Barakah Admin Styles ── */
         .bk-admin-wrap {
-            max-width: 820px;
+            max-width: 720px;
+            margin: 0 auto;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 0.88rem;
         }
-        .bk-admin-wrap .notice.notice-error {
-            display: none;
-        }
+        .bk-admin-wrap .notice.notice-error { display: none; }
         .bk-admin-hero {
             background: linear-gradient(135deg, #0d0d2b 0%, #1a0a3e 100%);
-            border-radius: 14px;
-            padding: 28px 32px;
-            margin: 20px 0 24px;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 14px 0 14px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 14px;
             border: 1px solid rgba(245,200,66,0.25);
-            box-shadow: 0 4px 32px rgba(0,0,0,0.35);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.25);
         }
-        .bk-admin-hero-icon { font-size: 3rem; line-height: 1; }
+        .bk-admin-hero-icon { font-size: 2rem; line-height: 1; }
         .bk-admin-hero h1 {
             color: #F5C842;
-            font-size: 1.6rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            margin: 0 0 4px;
+            margin: 0 0 2px;
             padding: 0;
         }
-        .bk-admin-hero p {
-            color: rgba(255,235,180,0.65);
-            margin: 0;
-            font-size: 0.9rem;
-        }
+        .bk-admin-hero p { color: rgba(255,235,180,0.65); margin: 0; font-size: 0.78rem; }
         .bk-shortcode-box {
             background: rgba(245,200,66,0.12);
             border: 1px solid rgba(245,200,66,0.35);
-            border-radius: 8px;
-            padding: 3px 12px;
+            border-radius: 6px;
+            padding: 1px 8px;
             color: #F5C842;
             font-family: monospace;
-            font-size: 1rem;
+            font-size: 0.85rem;
             display: inline-block;
-            margin-top: 8px;
+            margin-top: 4px;
         }
         .bk-card-wrap {
             background: #fff;
-            border: 1px solid #ddd;
-            border-radius: 12px;
-            padding: 24px 28px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
+            box-shadow: none;
         }
         .bk-card-wrap h2 {
-            font-size: 1rem;
-            font-weight: 600;
+            font-size: 0.82rem;
+            font-weight: 700;
             color: #1e1e3a;
-            margin: 0 0 18px;
-            padding: 0;
+            margin: 0 0 12px;
+            padding: 0 0 8px;
             display: flex;
             align-items: center;
-            gap: 8px;
-            border-bottom: 2px solid #f0eefc;
-            padding-bottom: 10px;
+            gap: 6px;
+            border-bottom: 1px solid #f0eefc;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
         }
-        .bk-card-wrap h2 .dashicons { color: #6B8CDE; }
-        .bk-field { margin-bottom: 18px; }
+        .bk-card-wrap h2 .dashicons { color: #6B8CDE; font-size: 16px; width: 16px; height: 16px; }
+        .bk-field { margin-bottom: 12px; }
+        .bk-field:last-child { margin-bottom: 0; }
         .bk-field label {
             display: block;
             font-weight: 600;
-            font-size: 0.85rem;
-            color: #333;
-            margin-bottom: 6px;
+            font-size: 0.8rem;
+            color: #444;
+            margin-bottom: 4px;
         }
         .bk-field input[type="text"],
         .bk-field input[type="number"],
         .bk-field select {
             width: 100%;
-            max-width: 420px;
-            padding: 9px 13px;
-            border: 1.5px solid #ddd;
-            border-radius: 8px;
-            font-size: 0.9rem;
+            max-width: 380px;
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.84rem;
             transition: border-color 0.2s;
             outline: none;
             background: #fafafa;
@@ -221,70 +236,62 @@ function barakah_settings_page() {
         .bk-field select:focus {
             border-color: #6B8CDE;
             background: #fff;
-            box-shadow: 0 0 0 3px rgba(107,140,222,0.12);
+            box-shadow: 0 0 0 2px rgba(107,140,222,0.1);
         }
-        .bk-field .description {
-            font-size: 0.78rem;
-            color: #888;
-            margin-top: 5px;
-        }
-        .bk-field-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
+        .bk-field .description { font-size: 0.74rem; color: #999; margin-top: 3px; }
+        .bk-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 600px) { .bk-field-row { grid-template-columns: 1fr; } }
         .bk-save-btn {
             background: linear-gradient(135deg, #2c1a6e, #1a0a3e);
             color: #F5C842;
             border: 1px solid rgba(245,200,66,0.4);
-            border-radius: 8px;
-            padding: 10px 28px;
-            font-size: 0.95rem;
+            border-radius: 6px;
+            padding: 8px 22px;
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s;
         }
         .bk-save-btn:hover {
             background: linear-gradient(135deg, #3a2480, #250f52);
-            box-shadow: 0 4px 16px rgba(107,140,222,0.3);
+            box-shadow: 0 3px 12px rgba(107,140,222,0.3);
         }
         .bk-notice {
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 16px;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
             font-weight: 600;
-            font-size: 0.88rem;
+            font-size: 0.82rem;
         }
-        .bk-notice-success { background: #edfaf1; border-left: 4px solid #2ecc71; color: #1a6e3a; }
-        .bk-notice-error   { background: #fef0f0; border-left: 4px solid #e74c3c; color: #7a1a1a; }
+        .bk-notice-success { background: #edfaf1; border-left: 3px solid #2ecc71; color: #1a6e3a; }
+        .bk-notice-error   { background: #fef0f0; border-left: 3px solid #e74c3c; color: #7a1a1a; }
         .bk-methods-info {
             background: #f8f7ff;
             border: 1px solid #e0dcff;
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-top: 8px;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-top: 6px;
         }
-        .bk-methods-info p { margin: 0 0 6px; font-size: 0.8rem; color: #555; }
+        .bk-methods-info p { margin: 0 0 4px; font-size: 0.74rem; color: #555; }
         .bk-method-tag {
             display: inline-block;
-            background: rgba(107,140,222,0.12);
-            border: 1px solid rgba(107,140,222,0.25);
-            border-radius: 6px;
-            padding: 2px 8px;
-            font-size: 0.72rem;
+            background: rgba(107,140,222,0.1);
+            border: 1px solid rgba(107,140,222,0.2);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.68rem;
             color: #4a6abf;
-            margin: 2px;
+            margin: 1px;
         }
         .bk-preview-code {
             background: #1e1e3a;
             color: #F5C842;
-            border-radius: 8px;
-            padding: 14px 18px;
+            border-radius: 6px;
+            padding: 10px 14px;
             font-family: monospace;
-            font-size: 0.85rem;
-            line-height: 1.7;
-            margin-top: 8px;
+            font-size: 0.8rem;
+            line-height: 1.6;
+            margin-top: 6px;
         }
         .bk-preview-code .comment { color: rgba(255,255,255,0.35); }
     </style>
@@ -538,19 +545,49 @@ function barakah_settings_page() {
                 </div>
             </div>
 
-            <!-- Global Greeting Popup -->
+            <!-- Greeting Popup -->
             <div class="bk-card-wrap">
-                <h2><span class="dashicons dashicons-megaphone"></span> Global Greeting Popup</h2>
+                <h2><span class="dashicons dashicons-megaphone"></span> Greeting Popup</h2>
                 <div class="bk-field">
                     <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;">
                         <input type="checkbox" name="barakah_greeting_popup" value="1" <?php checked( $greeting_popup, '1' ); ?> />
-                        Enable Global Greeting Popup
+                        Enable Greeting Popup
                     </label>
                     <div class="description">
-                        Shows a Ramadan celebration popup on every page — once per hour per visitor. No shortcode needed.
+                        Shows a Ramadan celebration popup — once per hour per visitor. No shortcode needed.
                     </div>
                 </div>
-                <div class="bk-field" style="margin-top:14px;">
+                <div class="bk-field" style="margin-top:12px;">
+                    <label>Show popup on</label>
+                    <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                            <input type="radio" name="barakah_greeting_popup_scope" value="all" <?php checked( $greeting_popup_scope, 'all' ); ?> onchange="bkTogglePagePicker(this.value)" />
+                            All pages
+                        </label>
+                        <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:400;">
+                            <input type="radio" name="barakah_greeting_popup_scope" value="specific" <?php checked( $greeting_popup_scope, 'specific' ); ?> onchange="bkTogglePagePicker(this.value)" />
+                            Specific pages only
+                        </label>
+                    </div>
+                </div>
+                <div class="bk-field" id="bk-page-picker" style="margin-top:10px;<?php echo $greeting_popup_scope === 'all' ? 'display:none;' : ''; ?>">
+                    <label for="barakah_greeting_popup_page_ids">Select pages</label>
+                    <select
+                        name="barakah_greeting_popup_page_ids[]"
+                        id="barakah_greeting_popup_page_ids"
+                        multiple
+                        size="5"
+                        style="width:100%;max-width:380px;border:1px solid #ddd;border-radius:6px;font-size:0.84rem;background:#fafafa;padding:4px;"
+                    >
+                        <?php foreach ( $all_pages as $page ) : ?>
+                        <option value="<?php echo esc_attr( $page->ID ); ?>" <?php selected( in_array( $page->ID, $selected_page_ids, true ) ); ?>>
+                            <?php echo esc_html( $page->post_title ); ?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <div class="description">Hold Ctrl / Cmd to select multiple pages.</div>
+                </div>
+                <div class="bk-field" style="margin-top:12px;">
                     <label for="barakah_greeting_popup_title">Popup Title</label>
                     <input
                         type="text"
@@ -561,18 +598,24 @@ function barakah_settings_page() {
                     />
                     <div class="description">Main heading shown in the popup. Supports Arabic and emoji.</div>
                 </div>
-                <div class="bk-field" style="margin-top:14px;">
+                <div class="bk-field" style="margin-top:12px;">
                     <label for="barakah_greeting_popup_msg">Popup Message</label>
                     <textarea
                         id="barakah_greeting_popup_msg"
                         name="barakah_greeting_popup_msg"
                         rows="3"
-                        style="width:100%;max-width:420px;padding:9px 13px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;background:#fafafa;font-family:inherit;resize:vertical;"
+                        style="width:100%;max-width:420px;padding:6px 10px;border:1px solid #ddd;border-radius:6px;font-size:0.84rem;background:#fafafa;font-family:inherit;resize:vertical;"
                         placeholder="Wishing you and your family a blessed month of Ramadan!"
                     ><?php echo esc_textarea( $greeting_popup_msg ); ?></textarea>
                     <div class="description">Supporting message below the title. Leave empty to hide.</div>
                 </div>
             </div>
+            <script>
+            function bkTogglePagePicker(val) {
+                var el = document.getElementById('bk-page-picker');
+                if (el) el.style.display = (val === 'specific') ? '' : 'none';
+            }
+            </script>
 
             <!-- Shortcode Usage -->
             <div class="bk-card-wrap">

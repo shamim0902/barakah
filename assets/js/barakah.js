@@ -119,7 +119,6 @@
   var greetingEscHandler  = null;
   var greetingTimerId     = null;
   var confettiRAF         = null;
-  var confettiPieces      = [];
 
   /* ── Helpers ─────────────────────────────────────────────────────────────── */
 
@@ -970,6 +969,16 @@
 
     if (!config || config.enabled !== "1") return;
 
+    /* Page scope check */
+    if (config.scope === "specific" && config.pageIds && config.pageIds.length > 0) {
+      var curId = parseInt(config.currentId, 10) || 0;
+      var allowed = false;
+      for (var pi = 0; pi < config.pageIds.length; pi++) {
+        if (parseInt(config.pageIds[pi], 10) === curId) { allowed = true; break; }
+      }
+      if (!allowed) return;
+    }
+
     var GREETING_KEY = "barakah_greeting_ts";
     var ONE_HOUR_MS  = 60 * 60 * 1000;
     var lastShown    = null;
@@ -990,7 +999,6 @@
     overlay.id        = "bk-greeting-overlay";
     overlay.className = "bk-greeting-overlay";
     overlay.innerHTML =
-      '<canvas id="bk-confetti-canvas" class="bk-confetti-canvas"></canvas>' +
       '<div class="bk-greeting-panel">' +
         '<div class="bk-greeting-deco">' +
           '<div class="bk-greeting-ornament bk-greeting-ornament-l"></div>' +
@@ -1020,8 +1028,7 @@
       setTimeout(closeGreetingPopup, 800);
     }, 5000);
 
-    var canvas = document.getElementById("bk-confetti-canvas");
-    if (canvas) startConfetti(canvas);
+    startConfetti();
   }
 
   function closeGreetingPopup() {
@@ -1039,74 +1046,37 @@
     if (e.key === "Escape") closeGreetingPopup();
   }
 
-  function startConfetti(canvas) {
-    var colors = ["#F5C842","#e74c3c","#2ecc71","#3498db","#f39c12","#9b59b6","#ff6b6b","#4ecdc4","#45b7d1","#fff","#fd79a8"];
-    var ctx    = canvas.getContext("2d");
-    var active = true;
-    confettiPieces = [];
+  function startConfetti() {
+    var shapes  = ["\uD83C\uDF19", "\u2B50", "\u2728", "\u2746"];
+    var colors  = ["#FFD700", "#F8F8FF", "#E6E6FA", "#20B2AA"];
+    var interval = null;
 
-    // Seed initial scatter across top portion of viewport
-    for (var i = 0; i < 140; i++) {
-      confettiPieces.push(mkConfettiPiece(colors, true));
+    function spawnPiece() {
+      var el = document.createElement("div");
+      el.className = "bk-ramadan-confetti";
+      el.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+      el.style.color    = colors[Math.floor(Math.random() * colors.length)];
+      el.style.left     = (Math.random() * 100) + "vw";
+      el.style.fontSize = (Math.random() * 20 + 15) + "px";
+      var dur = (Math.random() * 3 + 3);
+      el.style.animationDuration = dur + "s";
+      document.body.appendChild(el);
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, dur * 1000 + 200);
     }
 
-    // Stop spawning new pieces after 3 s
-    var spawnStop = setTimeout(function () { active = false; }, 3000);
-
-    function frame() {
-      var W = canvas.width  = window.innerWidth;
-      var H = canvas.height = window.innerHeight;
-      ctx.clearRect(0, 0, W, H);
-
-      // Trickle in extra pieces while active
-      if (active && confettiPieces.length < 220) {
-        for (var n = 0; n < 4; n++) confettiPieces.push(mkConfettiPiece(colors, false));
-      }
-
-      for (var k = confettiPieces.length - 1; k >= 0; k--) {
-        var p = confettiPieces[k];
-        p.vy += 0.07;                                   // gravity
-        p.y  += p.vy;
-        p.x  += p.vx + Math.sin(p.y * 0.013) * 0.8;   // gentle sway
-        p.rot += p.rs;
-        if (p.y > H + 20) { confettiPieces.splice(k, 1); continue; }
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        ctx.globalAlpha = p.a;
-        ctx.fillStyle   = p.c;
-        ctx.fillRect(-p.w * 0.5, -p.h * 0.5, p.w, p.h);
-        ctx.restore();
-      }
-
-      if (confettiPieces.length > 0 || active) {
-        confettiRAF = requestAnimationFrame(frame);
-      } else {
-        confettiRAF = null;
-        clearTimeout(spawnStop);
-      }
-    }
-    confettiRAF = requestAnimationFrame(frame);
-  }
-
-  function mkConfettiPiece(colors, scatter) {
-    return {
-      x:   Math.random() * window.innerWidth,
-      y:   scatter ? (Math.random() * -300 - 10) : -10,
-      vx:  (Math.random() - 0.5) * 3.5,
-      vy:  Math.random() * 2 + 1.5,
-      rot: Math.random() * Math.PI * 2,
-      rs:  (Math.random() - 0.5) * 0.16,
-      c:   colors[Math.floor(Math.random() * colors.length)],
-      w:   Math.random() * 7 + 4,
-      h:   Math.random() * 12 + 5,
-      a:   Math.random() * 0.45 + 0.55
-    };
+    // Spawn immediately and then every 150 ms
+    spawnPiece();
+    interval = setInterval(spawnPiece, 150);
+    confettiRAF = interval; // reuse variable to store interval id for stopConfetti
   }
 
   function stopConfetti() {
-    if (confettiRAF) { cancelAnimationFrame(confettiRAF); confettiRAF = null; }
-    confettiPieces = [];
+    if (confettiRAF) { clearInterval(confettiRAF); confettiRAF = null; }
+    // Remove any remaining falling pieces
+    var pieces = document.querySelectorAll(".bk-ramadan-confetti");
+    for (var i = 0; i < pieces.length; i++) {
+      if (pieces[i].parentNode) pieces[i].parentNode.removeChild(pieces[i]);
+    }
   }
 
   /* ── Boot ────────────────────────────────────────────────────────────────── */

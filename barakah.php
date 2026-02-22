@@ -43,10 +43,16 @@ function barakah_enqueue_frontend_assets() {
     );
 
     // Global greeting popup config — available on every page
+    $popup_page_ids_raw = get_option( 'barakah_greeting_popup_page_ids', '' );
+    $popup_page_ids     = array_values( array_filter( array_map( 'absint', explode( ',', $popup_page_ids_raw ) ) ) );
+
     wp_localize_script( 'barakah-script', 'barakahGreetingConfig', [
-        'enabled' => get_option( 'barakah_greeting_popup', '0' ),
-        'title'   => get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' ),
-        'msg'     => get_option( 'barakah_greeting_popup_msg',   'Wishing you and your family a blessed month of Ramadan!' ),
+        'enabled'   => get_option( 'barakah_greeting_popup', '0' ),
+        'title'     => get_option( 'barakah_greeting_popup_title', 'رمضان مبارك · Ramadan Mubarak 🌙' ),
+        'msg'       => get_option( 'barakah_greeting_popup_msg',   'Wishing you and your family a blessed month of Ramadan!' ),
+        'scope'     => get_option( 'barakah_greeting_popup_scope', 'all' ),
+        'pageIds'   => $popup_page_ids,
+        'currentId' => (int) get_queried_object_id(),
     ] );
 }
 add_action( 'wp_enqueue_scripts', 'barakah_enqueue_frontend_assets' );
