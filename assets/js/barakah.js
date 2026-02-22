@@ -158,8 +158,11 @@
       );
     }).join("");
 
+    var isLight  = container._bkMode === "light";
+    var rootCls  = "bk-root" + (isLight ? " bk-light" : "");
+
     container.innerHTML =
-      '<div class="bk-root">' +
+      '<div class="' + rootCls + '">' +
         '<canvas class="bk-stars" id="bk-stars"></canvas>' +
         '<div class="bk-orb bk-orb1"></div>' +
         '<div class="bk-orb bk-orb2"></div>' +
@@ -269,7 +272,7 @@
     /* Store prayers on container for clock updates */
     container._bkPrayers = prayers;
 
-    initStars();
+    if (!isLight) initStars();
     renderDua();
     renderDuaDots();
     bindDuaControls();
@@ -470,6 +473,12 @@
     var city    = container.getAttribute("data-city")    || "Dhaka";
     var country = container.getAttribute("data-country") || "Bangladesh";
     var method  = container.getAttribute("data-method")  || "1";
+    var mode    = container.getAttribute("data-mode")    || "dark";
+    container._bkMode = mode;
+    if (mode === "light") {
+      var loading = container.querySelector(".bk-loading");
+      if (loading) loading.classList.add("bk-light");
+    }
     fetchPrayerTimes(city, country, method, container);
   }
 

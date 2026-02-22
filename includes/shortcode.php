@@ -12,6 +12,7 @@ function barakah_render_shortcode( $atts ) {
             'city'    => get_option( 'barakah_city',    'Dhaka' ),
             'country' => get_option( 'barakah_country', 'Bangladesh' ),
             'method'  => get_option( 'barakah_method',  '1' ),
+            'mode'    => 'dark',
         ],
         $atts,
         'barakah'
@@ -24,6 +25,7 @@ function barakah_render_shortcode( $atts ) {
         data-city="<?php echo esc_attr( $atts['city'] ); ?>"
         data-country="<?php echo esc_attr( $atts['country'] ); ?>"
         data-method="<?php echo esc_attr( $atts['method'] ); ?>"
+        data-mode="<?php echo esc_attr( $atts['mode'] ); ?>"
     >
         <!-- Loading state -->
         <div class="bk-loading">
