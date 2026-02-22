@@ -1,0 +1,423 @@
+/**
+ * Barakah - Islamic Prayer Times & Insights
+ * Mobile-first, green theme, BEM-style classes.
+ */
+
+:root {
+	--barakah-bg: #E8F5E9;
+	--barakah-card-bg: #C8E6C9;
+	--barakah-primary: #2E7D32;
+	--barakah-primary-dark: #1B5E20;
+	--barakah-text: #1B5E20;
+	--barakah-text-muted: #388E3C;
+	--barakah-shadow: rgba(27, 94, 32, 0.15);
+	--barakah-radius: 12px;
+	--barakah-radius-sm: 8px;
+	--barakah-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, sans-serif;
+	--barakah-font-arabic: "Traditional Arabic", "Scheherazade New", "Amiri", serif;
+}
+
+/* Base widget container */
+.barakah-widget {
+	font-family: var(--barakah-font-sans);
+	background: var(--barakah-bg);
+	color: var(--barakah-text);
+	padding: 1rem;
+	border-radius: var(--barakah-radius);
+	max-width: 100%;
+	box-sizing: border-box;
+}
+
+.barakah-widget *,
+.barakah-widget *::before,
+.barakah-widget *::after {
+	box-sizing: border-box;
+}
+
+/* Header */
+.barakah-widget__header {
+	margin-bottom: 1.25rem;
+}
+
+.barakah-widget__title {
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--barakah-primary-dark);
+	margin: 0 0 0.35em 0;
+	display: flex;
+	align-items: center;
+	gap: 0.35em;
+}
+
+.barakah-widget__title-icon {
+	display: inline-block;
+	width: 1.25em;
+	height: 1.25em;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232E7D32'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.barakah-widget__meta {
+	font-size: 0.875rem;
+	color: var(--barakah-text-muted);
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35em;
+}
+
+.barakah-widget__sep {
+	opacity: 0.7;
+}
+
+.barakah-widget__date-hijri {
+	margin-left: 0.25em;
+}
+
+/* Ramadan cards: Sehri & Iftar */
+.barakah-widget__ramadan-cards {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+	margin-bottom: 1.25rem;
+}
+
+.barakah-card {
+	background: var(--barakah-card-bg);
+	border-radius: var(--barakah-radius);
+	padding: 1.25rem;
+	box-shadow: 0 2px 8px var(--barakah-shadow);
+}
+
+.barakah-card__title {
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--barakah-text-muted);
+	margin: 0 0 0.5em 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.barakah-card__title::before {
+	content: "";
+	width: 1.25em;
+	height: 1.25em;
+	background: var(--barakah-primary);
+	border-radius: 50%;
+	opacity: 0.9;
+}
+
+.barakah-card--iftar .barakah-card__title::before {
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231B5E20'%3E%3Cpath d='M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.barakah-card__time {
+	font-size: 1.75rem;
+	font-weight: 700;
+	color: var(--barakah-primary);
+	letter-spacing: 0.02em;
+}
+
+@media (min-width: 480px) {
+	.barakah-widget__ramadan-cards {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+/* Countdown */
+.barakah-widget__countdown {
+	background: var(--barakah-card-bg);
+	border-radius: var(--barakah-radius);
+	padding: 1.25rem;
+	margin-bottom: 1.25rem;
+	box-shadow: 0 2px 8px var(--barakah-shadow);
+}
+
+.barakah-widget__countdown-title {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--barakah-primary-dark);
+	margin: 0 0 0.75rem 0;
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.barakah-widget__countdown-title::before {
+	content: "";
+	width: 1em;
+	height: 1em;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%232E7D32'%3E%3Cpath d='M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41L17.62 5c-1.55-1.26-3.5-2-5.62-2-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-2-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.barakah-widget__countdown-timer {
+	font-size: 2rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--barakah-primary);
+	letter-spacing: 0.05em;
+	margin-bottom: 0.25rem;
+}
+
+.barakah-widget__countdown-sep {
+	opacity: 0.8;
+}
+
+.barakah-widget__countdown-labels {
+	display: flex;
+	gap: 2rem;
+	font-size: 0.6875rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--barakah-text-muted);
+	margin-bottom: 1rem;
+}
+
+.barakah-widget__progress {
+	background: rgba(255,255,255,0.6);
+	border-radius: 999px;
+	height: 10px;
+	overflow: hidden;
+	margin-bottom: 0.5rem;
+}
+
+.barakah-widget__progress-bar {
+	height: 100%;
+	background: var(--barakah-primary);
+	border-radius: 999px;
+	transition: width 0.5s ease;
+}
+
+.barakah-widget__progress-labels {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.75rem;
+	color: var(--barakah-text-muted);
+}
+
+.barakah-widget__progress-pct {
+	font-weight: 600;
+	color: var(--barakah-primary);
+}
+
+@media (min-width: 768px) {
+	.barakah-widget__countdown-timer {
+		font-size: 2.5rem;
+	}
+}
+
+/* Prayer times grid */
+.barakah-widget__prayer-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.barakah-widget__prayer-item {
+	background: var(--barakah-card-bg);
+	border-radius: var(--barakah-radius-sm);
+	padding: 0.75rem 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	box-shadow: 0 1px 4px var(--barakah-shadow);
+	transition: background 0.2s ease;
+}
+
+.barakah-widget__prayer-item.barakah-widget__prayer-item--current {
+	background: var(--barakah-primary);
+	color: #fff;
+}
+
+.barakah-widget__prayer-item.barakah-widget__prayer-item--next {
+	background: rgba(46, 125, 50, 0.25);
+	border: 1px solid var(--barakah-primary);
+}
+
+.barakah-widget__prayer-name {
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--barakah-text-muted);
+}
+
+.barakah-widget__prayer-item--current .barakah-widget__prayer-name,
+.barakah-widget__prayer-item--next .barakah-widget__prayer-name {
+	color: inherit;
+	opacity: 0.95;
+}
+
+.barakah-widget__prayer-time {
+	font-size: 1.125rem;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--barakah-primary);
+}
+
+.barakah-widget__prayer-item--current .barakah-widget__prayer-time,
+.barakah-widget__prayer-item--next .barakah-widget__prayer-time {
+	color: inherit;
+}
+
+@media (min-width: 768px) {
+	.barakah-widget__prayer-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+@media (min-width: 1024px) {
+	.barakah-widget__prayer-grid {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+/* Prayer CTA button */
+.barakah-widget__prayer-cta {
+	margin-bottom: 1.25rem;
+}
+
+.barakah-widget__prayer-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+	width: 100%;
+	padding: 0.875rem 1.5rem;
+	background: var(--barakah-primary-dark);
+	color: #fff;
+	font-size: 1rem;
+	font-weight: 600;
+	text-decoration: none;
+	border-radius: var(--barakah-radius);
+	border: none;
+	cursor: pointer;
+	transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.barakah-widget__prayer-btn:hover,
+.barakah-widget__prayer-btn:focus {
+	background: var(--barakah-primary);
+	color: #fff;
+	outline: none;
+}
+
+.barakah-widget__prayer-btn:active {
+	transform: scale(0.98);
+}
+
+.barakah-widget__prayer-btn::before {
+	content: "";
+	width: 1.25em;
+	height: 1.25em;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+/* Date browser */
+.barakah-widget__date-browser {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 1.25rem;
+	flex-wrap: wrap;
+}
+
+.barakah-widget__date-prev,
+.barakah-widget__date-next {
+	width: 40px;
+	height: 40px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--barakah-primary);
+	color: #fff;
+	border: none;
+	border-radius: var(--barakah-radius-sm);
+	font-size: 1.25rem;
+	cursor: pointer;
+	transition: background 0.2s ease;
+}
+
+.barakah-widget__date-prev:hover,
+.barakah-widget__date-next:hover {
+	background: var(--barakah-primary-dark);
+}
+
+.barakah-widget__date-input {
+	flex: 1;
+	min-width: 140px;
+	padding: 0.5rem 0.75rem;
+	font-size: 0.9375rem;
+	border: 1px solid var(--barakah-primary);
+	border-radius: var(--barakah-radius-sm);
+	background: #fff;
+	color: var(--barakah-text);
+}
+
+.barakah-widget__date-input:focus {
+	outline: none;
+	box-shadow: 0 0 0 2px var(--barakah-primary);
+}
+
+/* Insight cards (Ayah / Dua) */
+.barakah-widget__insight {
+	background: var(--barakah-card-bg);
+	border-radius: var(--barakah-radius);
+	padding: 1.25rem;
+	margin-bottom: 1rem;
+	box-shadow: 0 2px 8px var(--barakah-shadow);
+}
+
+.barakah-widget__insight:last-child {
+	margin-bottom: 0;
+}
+
+.barakah-widget__insight-title {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--barakah-primary-dark);
+	margin: 0 0 0.75rem 0;
+}
+
+.barakah-widget__insight-arabic {
+	font-family: var(--barakah-font-arabic);
+	font-size: 1.25rem;
+	line-height: 1.6;
+	direction: rtl;
+	text-align: right;
+	margin: 0 0 0.75rem 0;
+	color: var(--barakah-text);
+}
+
+.barakah-widget__insight-bangla,
+.barakah-widget__insight-meaning {
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	color: var(--barakah-text-muted);
+	margin: 0 0 0.5rem 0;
+}
+
+.barakah-widget__insight-ref {
+	font-size: 0.8125rem;
+	color: var(--barakah-primary);
+	margin: 0.5rem 0 0 0;
+}
+
+/* Responsive container */
+@media (min-width: 480px) {
+	.barakah-widget {
+		padding: 1.5rem;
+	}
+}
+
+@media (min-width: 768px) {
+	.barakah-widget {
+		padding: 2rem;
+	}
+	.barakah-widget__title {
+		font-size: 1.5rem;
+	}
+}
