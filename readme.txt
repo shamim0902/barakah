@@ -62,6 +62,16 @@ Yes. Use the `widget` attribute:
 = How do popup/sticky page targeting work? =
 In plugin settings, choose **All pages** or **Specific pages only**, then select pages.
 
+= How do I use Greeting Popup? =
+Go to **Barakah -> Greeting Popup**, enable it, set title/message, choose page scope, then save.
+To quickly test popup display on frontend, open:
+`https://your-site-url/?barakah_test_popup=1`
+
+= How do I use Sticky Prayer Bar? =
+Go to **Barakah -> Sticky Bar**, enable it, choose header/footer position, theme, greeting text, and page scope.
+The sticky bar shows Sehri and Iftar from your configured location.
+If you choose **Specific pages only**, it appears only on selected pages.
+
 = Does it need an API key? =
 No. It uses Aladhan public endpoints.
 
@@ -79,6 +89,7 @@ All supported attributes:
 * `method` (number/string; Aladhan method id)
 * `mode` (`dark` or `light`)
 * `widget` (`full`, `prayer_times`, `ramadan`, `hadith`, `dua`, `date`)
+* `columns` (`1` single-column, `2` two-column; full widget only)
 
 Available shortcode variants:
 
@@ -101,6 +112,31 @@ Examples with combinations:
 `[barakah widget="hadith" mode="light"]`
 `[barakah widget="dua" mode="dark"]`
 `[barakah widget="date" city="Dhaka" country="Bangladesh"]`
+`[barakah widget="full" columns="1"]`
+`[barakah widget="full" columns="2"]`
+
+== Greeting Popup ==
+
+Setup steps:
+1. Open **Barakah -> Greeting Popup**
+2. Enable popup
+3. Set title and message
+4. Choose scope: all pages or specific pages
+5. Save settings
+
+Quick check link:
+`https://your-site-url/?barakah_test_popup=1`
+
+== Sticky Prayer Bar ==
+
+Setup steps:
+1. Open **Barakah -> Sticky Bar**
+2. Enable sticky bar
+3. Select position (`Header` or `Footer`)
+4. Select theme (`Dark` or `Light`)
+5. Set greeting text
+6. Select scope (all pages or specific pages)
+7. Save settings
 
 == Changelog ==
 

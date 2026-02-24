@@ -316,10 +316,19 @@ function barakah_onboarding_page() {
             <div class="bk-success-title">Barakah is ready!</div>
             <div class="bk-success-msg">
                 Your prayer times are now configured.<br>
-                Place this shortcode on any page or post:<br>
+                Shortcode usage:<br>
                 <div class="bk-shortcode-box">[barakah]</div><br>
-                You can also override per-page:<br>
+                <div class="bk-shortcode-box">[barakah widget="full"]</div>
+                <div class="bk-shortcode-box">[barakah widget="prayer_times"]</div>
+                <div class="bk-shortcode-box">[barakah widget="ramadan"]</div>
+                <div class="bk-shortcode-box">[barakah widget="hadith"]</div>
+                <div class="bk-shortcode-box">[barakah widget="dua"]</div>
+                <div class="bk-shortcode-box">[barakah widget="date"]</div><br>
+                Common combinations:<br>
                 <div class="bk-shortcode-box">[barakah city="London" country="UK"]</div>
+                <div class="bk-shortcode-box">[barakah city="Istanbul" country="Turkey" method="13"]</div>
+                <div class="bk-shortcode-box">[barakah mode="light"]</div>
+                <div class="bk-shortcode-box">[barakah widget="prayer_times" mode="light"]</div>
             </div>
             <a href="<?php echo esc_url( admin_url( 'admin.php?page=barakah-settings' ) ); ?>" class="bk-success-btn">
                 Go to Full Settings &rarr;

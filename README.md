@@ -67,6 +67,7 @@ Supported attributes:
 - `method` (number/string; Aladhan method id)
 - `mode` (`dark` or `light`)
 - `widget` (`full`, `prayer_times`, `ramadan`, `hadith`, `dua`, `date`)
+- `columns` (`1` single-column, `2` two-column; applies to `widget="full"`)
 
 All available shortcode variants:
 
@@ -92,6 +93,8 @@ Common combinations:
 [barakah widget="hadith" mode="light"]
 [barakah widget="dua" mode="dark"]
 [barakah widget="date" city="Dhaka" country="Bangladesh"]
+[barakah widget="full" columns="1"]
+[barakah widget="full" columns="2"]
 ```
 
 ## Admin Settings Overview
@@ -102,6 +105,42 @@ Common combinations:
 - **Greeting Popup**: enable, message, page scope, selected pages
 - **Sticky Bar**: enable, position, theme, greeting text, page scope, selected pages
 - **Shortcode**: quick usage examples
+
+## Greeting Popup (How To Use)
+
+1. Go to **Barakah -> Greeting Popup**
+2. Enable **Greeting Popup**
+3. Set title/message
+4. Choose where to show:
+   - **All pages**
+   - **Specific pages only** (then select pages)
+5. Save settings
+
+Popup behavior:
+- Shows as an overlay on matching pages
+- Visitor can close it with click outside or `Esc`
+- Uses local storage cooldown to avoid showing repeatedly in a short period
+
+Quick test link:
+- Append `?barakah_test_popup=1` to any page URL  
+  Example: `https://example.com/?barakah_test_popup=1`
+
+## Sticky Prayer Bar (How To Use)
+
+1. Go to **Barakah -> Sticky Bar**
+2. Enable **Sticky Prayer Bar**
+3. Configure:
+   - Position: `Header` or `Footer`
+   - Theme: `Dark` or `Light`
+   - Greeting text
+   - Scope: `All pages` or `Specific pages only`
+4. Save settings
+
+Sticky behavior:
+- Appears collapsed on the right edge
+- Auto-opens after a short delay, then can auto-collapse again
+- Shows Sehri and Iftar based on your configured location and method
+- If scope is `Specific pages only`, it only appears on selected pages
 
 ## Caching
 

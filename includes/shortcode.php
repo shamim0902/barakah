@@ -303,6 +303,7 @@ function barakah_render_shortcode( $atts ) {
             'method'  => get_option( 'barakah_method', '1' ),
             'mode'    => 'dark',
             'widget'  => 'full',
+            'columns' => '',
         ],
         $atts,
         'barakah'
@@ -313,6 +314,7 @@ function barakah_render_shortcode( $atts ) {
     $atts['method']  = sanitize_text_field( $atts['method'] );
     $atts['mode']    = ( 'light' === strtolower( (string) $atts['mode'] ) ) ? 'light' : 'dark';
     $atts['widget']  = sanitize_key( $atts['widget'] );
+    $atts['columns'] = sanitize_text_field( $atts['columns'] );
 
     $allowed_widgets = [ 'full', 'prayer_times', 'ramadan', 'hadith', 'dua', 'date' ];
     if ( ! in_array( $atts['widget'], $allowed_widgets, true ) ) {
@@ -354,6 +356,14 @@ function barakah_render_shortcode( $atts ) {
 
     $has_server_data = ! empty( $data['timings'] ) && empty( $data['error'] );
     $two_col         = get_option( 'barakah_two_column', '0' );
+    $columns_override = strtolower( trim( (string) $atts['columns'] ) );
+
+    // Shortcode override for full widget layout: columns="1" (single) or columns="2" (two-column).
+    if ( in_array( $columns_override, [ '1', '0', 'single', 'one' ], true ) ) {
+        $two_col = '0';
+    } elseif ( in_array( $columns_override, [ '2', 'double', 'two', 'two-col', 'twocol' ], true ) ) {
+        $two_col = '1';
+    }
 
     $bangla_duas = $api->get_bangla_duas();
 

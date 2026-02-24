@@ -1,4 +1,4 @@
-name: Release Tag
+name: Release Tag and Asset
 
 on:
   push:
@@ -25,21 +25,31 @@ jobs:
           echo "tag=v${VERSION}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
-      - name: Check if tag already exists
-        id: check
+      - name: Build baraka.zip
         run: |
-          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
+          set -euo pipefail
 
-      - name: Create GitHub Release
-        if: steps.check.outputs.exists == 'false'
+          rm -rf package
+          mkdir -p package/barakah
+
+          rsync -a ./ package/barakah/ \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude '.claude/' \
+            --exclude 'builds/' \
+            --exclude '.gitignore' \
+            --exclude '.plugshipignore' \
+            --exclude '.DS_Store'
+
+          (cd package && zip -rq ../baraka.zip barakah)
+
+      - name: Create/Update GitHub Release and Attach baraka.zip
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Barakah ${{ steps.version.outputs.tag }}
+          files: baraka.zip
+          fail_on_unmatched_files: true
           body: |
             Release ${{ steps.version.outputs.version }}
 
