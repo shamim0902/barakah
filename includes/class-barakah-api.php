@@ -47,7 +47,7 @@ class Barakah_API {
 	public function get_prayer_times( $city, $country, $date = '', $method = 1 ) {
 		$today = gmdate( 'Y-m-d' );
 
-		$cache_hours = (int) get_option( 'barakah_cache_hours', 6 );
+		$cache_hours = (int) get_option( 'barakah_cache_hours', 2 );
 		$cache_key   = 'barakah_times_v2_' . sanitize_key( $city . '_' . $country . '_' . $today . '_' . $method );
 		$cached      = get_transient( $cache_key );
 

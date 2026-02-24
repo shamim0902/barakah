@@ -1,166 +1,136 @@
-# Barakah – Ramadan Prayer Times
-<img width="1496" height="849" alt="image" src="https://github.com/user-attachments/assets/5a6fc305-8242-45e5-a13e-efd1ce20cee1" />
+# Barakah - Ramadan Prayer Times
 
+Barakah is a WordPress plugin for Ramadan prayer times, Sehri/Iftar highlights, dua content, greeting popup, and a configurable sticky prayer bar.
 
-Download <a href="https://github.com/shamim0902/barakah/releases/latest/download/barakah.zip" > Latest release </a> the latest release and upload into your WordPress. then use shortcode like `[barakah mode=light]`
+It is powered by the free [Aladhan API](https://aladhan.com/prayer-times-api) (no API key required).
 
-Choose your area and share greetings with your visitors.
+## Current Version
 
-A beautiful, animated Ramadan prayer times widget for WordPress. Powered by the free [Aladhan API](https://aladhan.com/prayer-times-api) — no API key required.
+`1.0.0`
 
 ## Features
 
-- Live countdown to the next prayer (Fajr, Dhuhr, Asr, Maghrib, Isha)
-- Prominent Sehri & Iftar time cards with countdown badges
-- Full daily prayer timetable with active/next prayer highlighted
-- Full Ramadan month view (Hijri calendar) via modal
-- Rotating Daily Dua & Dhikr section (English + Bangla duas)
-- Dua at Iftar and Niyyah for Sehri cards
-- Hijri date display with Gregorian date
-- Dark & Light mode toggle (persisted in localStorage)
-- Two-column layout option for large screens
-- Server-side caching via WordPress Transients (configurable duration)
-- Animated twinkling star background (dark mode)
-- Fully responsive — works on mobile, tablet, and desktop
+- Prayer times widget via shortcode: `[barakah]`
+- Live clock and countdown to next prayer
+- Sehri and Iftar highlight cards
+- Full daily prayer list with active/next states
+- Ramadan month modal (Hijri calendar + Sehri/Iftar times)
+- Daily dua/zikr rotation (English + Bangla data support)
+- Header/footer greetings
+- Greeting popup with page targeting:
+  - all pages
+  - specific selected pages
+- Sticky prayer bar with:
+  - header/footer position
+  - dark/light theme
+  - page targeting (all/specific pages)
+  - delayed open behavior and collapsible side tab
+- Optional visitor location change
+- Hijri adjustment and caution-minute adjustments
+- Transient caching with configurable cache hours (default: 2)
+- Onboarding wizard for first-time setup
 
 ## Requirements
 
-- WordPress 5.5+
-- PHP 7.4+
+- WordPress `5.5+`
+- PHP `7.4+`
 
 ## Installation
 
 1. Upload the `barakah` folder to `/wp-content/plugins/`
-2. Activate the plugin via **Plugins > Installed Plugins**
-3. Go to **Barakah** in the admin sidebar to configure settings
-4. Add the shortcode to any page, post, or widget
+2. Activate the plugin from **Plugins**
+3. Open **Barakah** admin menu and configure settings
+4. Add shortcode to any page/post:
 
-## Shortcode Usage
-
-```
+```txt
 [barakah]
 ```
 
-Uses the global settings from the admin page (city, country, method).
+## Shortcode
 
-### Override per-instance
+Use global settings:
 
+```txt
+[barakah]
 ```
+
+Override location:
+
+```txt
 [barakah city="London" country="UK"]
 ```
 
-```
+Override method:
+
+```txt
 [barakah city="Istanbul" country="Turkey" method="13"]
 ```
 
-### Display mode
+Set widget mode per instance:
 
-```
-[barakah mode="light"]
+```txt
 [barakah mode="dark"]
+[barakah mode="light"]
 ```
 
-Default is `dark`. Users can also toggle between modes using the button in the widget header.
+## Admin Settings Overview
 
-## Admin Settings
+- **General**: city, country, calculation method, cache duration
+- **Calendar & Timings**: Hijri adjustment, Sehri/Iftar caution minutes
+- **Widget Display**: layout, greetings, location change toggle
+- **Greeting Popup**: enable, message, page scope, selected pages
+- **Sticky Bar**: enable, position, theme, greeting text, page scope, selected pages
+- **Shortcode**: quick usage examples
 
-Navigate to **Barakah** in the WordPress admin sidebar.
+## Caching
 
-### Location Settings
+- Prayer times are cached with WordPress transients.
+- Default cache duration: **2 hours**.
+- Cache is flushed when relevant settings change.
 
-| Setting   | Description                          | Default      |
-|-----------|--------------------------------------|--------------|
-| City      | City name for prayer times           | Dhaka        |
-| Country   | Country name or code                 | Bangladesh   |
-| Method    | Calculation method (see list below)  | 1            |
+## Security Notes
 
-### Cache Settings
+- Admin settings and onboarding are protected by capability checks and nonces.
+- Plugin sanitizes and validates settings input.
+- Frontend dynamic rendering escapes external/API-derived text before HTML insertion.
 
-| Setting        | Description                              | Default |
-|----------------|------------------------------------------|---------|
-| Cache Duration | Hours to cache prayer times (1–168)      | 6       |
+## Project Structure
 
-Prayer times are fetched server-side and cached using WordPress Transients. Cache is automatically cleared when settings are saved.
-
-### Layout Settings
-
-| Setting            | Description                                          | Default |
-|--------------------|------------------------------------------------------|---------|
-| Show 2 Column      | Side-by-side layout on screens >= 768px              | Off     |
-
-When enabled, prayer times appear on the left and dua cards on the right. Mobile devices always use single column.
-
-## Calculation Methods
-
-| ID | Method                                           |
-|----|--------------------------------------------------|
-| 1  | Muslim World League                              |
-| 2  | Islamic Society of North America (ISNA)          |
-| 3  | Egyptian General Authority of Survey             |
-| 4  | Umm Al-Qura University, Makkah                  |
-| 5  | University of Islamic Sciences, Karachi          |
-| 7  | Institute of Geophysics, University of Tehran    |
-| 8  | Gulf Region                                      |
-| 9  | Kuwait                                           |
-| 10 | Qatar                                            |
-| 11 | Majlis Ugama Islam Singapura (Singapore)         |
-| 12 | Union Organization Islamic de France             |
-| 13 | Diyanet Isleri Baskanligi, Turkey                |
-| 14 | Spiritual Administration of Muslims of Russia    |
-| 15 | Moonsighting Committee Worldwide                 |
-
-### Regional recommendations
-
-- **Bangladesh, India, Pakistan** — Method 1 (Muslim World League) or Method 5 (Karachi)
-- **Saudi Arabia** — Method 4 (Umm Al-Qura)
-- **North America** — Method 2 (ISNA)
-- **Turkey** — Method 13
-- **Egypt** — Method 3
-
-## File Structure
-
-```
+```txt
 barakah/
-  barakah.php                  # Main plugin file (hooks, activation, assets)
-  readme.txt                   # WordPress.org readme
-  README.md                    # This file
+  barakah.php
+  readme.txt
+  README.md
   assets/
-    css/barakah.css             # All widget styles (dark, light, modal, two-col)
-    js/barakah.js               # Widget logic (render, countdown, dua rotation, month modal)
-  data/
-    bangla_duas.json            # 20 Bangla duas (Arabic, pronunciation, meaning)
+    css/
+      barakah.css
+      barakah-admin.css
+    js/
+      barakah.js
+      barakah-admin.js
   includes/
-    admin.php                   # Admin settings page
-    class-barakah-api.php       # Server-side API handler with transient caching
-    shortcode.php               # [barakah] shortcode registration
+    admin.php
+    onboarding.php
+    shortcode.php
+    class-barakah-api.php
+  data/
+    bangla_duas.json
 ```
-
-## How It Works
-
-1. On page load, the shortcode renders the widget container with `data-*` attributes
-2. The PHP API class fetches today's prayer times from Aladhan (cached via Transients)
-3. Data is passed to JavaScript via `wp_localize_script`
-4. JavaScript renders the full widget — prayer times, countdown timer, dua rotation
-5. If server-side fetch fails, JavaScript falls back to a client-side `fetch()` call
 
 ## Changelog
 
-### 1.0.2
-- Fixed: Correct Aladhan API endpoint (removed date from URL path)
-- Added: Full Ramadan month view modal (`hijriCalendarByCity` endpoint)
-- Added: Two-column layout setting for large screens
-- Added: Server-side caching with configurable duration
-- Added: Bangla duas (20 duas with Arabic, pronunciation, meaning)
-- Added: Both Gregorian and Hijri dates in month view
-- Added: Dark/Light mode toggle
-- Added: Auto cache flush on version upgrade
-
-### 1.0.1
-- Added: Cache settings in admin
-- Added: Server-side prayer times caching via Transients
-
 ### 1.0.0
-- Initial release
+
+- Added settings tabs and refreshed admin UX
+- Added onboarding wizard flow
+- Added greeting popup page targeting
+- Added sticky bar page targeting
+- Added sticky bar delayed open + enhanced collapse/expand transitions
+- Set sticky theme default to dark for new installs
+- Updated cache default to 2 hours
+- Improved frontend escaping for API-derived values
+- Prevented duplicated dua interval timers on re-render
+- Updated docs and release-readiness guidance
 
 ## License
 

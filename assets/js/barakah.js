@@ -108,6 +108,7 @@
 
   var duaIndex      = 0;
   var clockInterval = null;
+  var duaInterval   = null;
   var starsAnimId   = null;
   var monthCache    = null;
   var monthCacheKey = null;
@@ -216,8 +217,15 @@
     var rawHijriDay = parseInt(hijri.day, 10) || 1;
     var ramadanDay  = applyHijriAdjust(rawHijriDay);
     var displayHijriDay = (hijriAdjustDir !== "none" && hijriAdjustDays > 0) ? ramadanDay : rawHijriDay;
-    var hijriLabel = displayHijriDay + " " + hijri.month.en + " " + hijri.year + " AH";
-    var dateLabel  = gregorian.weekday.en + ", " + gregorian.day + " " + gregorian.month.en + " " + gregorian.year;
+    var hijriMonth = (hijri && hijri.month && hijri.month.en) ? hijri.month.en : "";
+    var hijriYear  = (hijri && hijri.year) ? String(hijri.year) : "";
+    var hijriLabel = displayHijriDay + " " + escHtml(hijriMonth) + " " + escHtml(hijriYear) + " AH";
+
+    var gregWeekday = (gregorian && gregorian.weekday && gregorian.weekday.en) ? gregorian.weekday.en : "";
+    var gregDay     = (gregorian && gregorian.day) ? String(gregorian.day) : "";
+    var gregMonth   = (gregorian && gregorian.month && gregorian.month.en) ? gregorian.month.en : "";
+    var gregYear    = (gregorian && gregorian.year) ? String(gregorian.year) : "";
+    var dateLabel   = escHtml(gregWeekday) + ", " + escHtml(gregDay) + " " + escHtml(gregMonth) + " " + escHtml(gregYear);
 
     /* Prayer list definition */
     var prayers = [
@@ -411,7 +419,8 @@
     clockInterval = setInterval(function () { updateClock(container); }, 1000);
 
     /* Auto-rotate dua every 30s */
-    setInterval(function () { nextDua(); }, 30000);
+    if (duaInterval) clearInterval(duaInterval);
+    duaInterval = setInterval(function () { nextDua(); }, 30000);
   }
 
   /* ── Stars canvas ────────────────────────────────────────────────────────── */
@@ -469,11 +478,13 @@
     var h      = now.getHours();
     var m      = now.getMinutes();
     var s      = now.getSeconds();
+    var ampm   = h >= 12 ? "PM" : "AM";
+    var h12    = h % 12 || 12;
     var nowMin = toMinutes(h, m);
 
     /* Clock display */
     var clockEl = document.getElementById("bk-clock");
-    if (clockEl) clockEl.textContent = pad(h) + ":" + pad(m) + ":" + pad(s);
+    if (clockEl) clockEl.textContent = pad(h12) + ":" + pad(m) + ":" + pad(s) + " " + ampm;
 
     /* Active / Next prayer */
     var activeIdx = -1;
@@ -763,7 +774,7 @@
       if (firstHijri && firstHijri.year) {
         var citySpan = titleEl.querySelector("span");
         var cityHtml = citySpan ? citySpan.outerHTML : "";
-        titleEl.innerHTML = "\uD83D\uDCC5 Ramadan " + firstHijri.year + " AH " + cityHtml;
+        titleEl.innerHTML = "\uD83D\uDCC5 Ramadan " + escHtml(String(firstHijri.year)) + " AH " + cityHtml;
       }
     }
 
@@ -776,8 +787,8 @@
       var isToday   = greg.date === todayStr;
       var hijriDay   = applyHijriAdjust(parseInt(hijri.day, 10));
       if (hijriDay <= 0) continue;
-      var weekday    = greg.weekday ? greg.weekday.en.slice(0, 3) : "";
-      var gregMonth  = greg.month ? greg.month.en.slice(0, 3) : "";
+      var weekday    = greg.weekday ? escHtml(greg.weekday.en.slice(0, 3)) : "";
+      var gregMonth  = greg.month ? escHtml(greg.month.en.slice(0, 3)) : "";
       var gregDay    = pad(parseInt(greg.day, 10));
       var hijriMonth = (hijri.month && hijri.month.en) ? hijri.month.en : "";
       var dateTd =
@@ -1109,6 +1120,17 @@
     var config = (typeof barakahGreetingConfig !== "undefined") ? barakahGreetingConfig : null;
     if (!config || config.stickyBar !== "1") return;
 
+    /* Page scope check */
+    if (config.stickyScope === "specific") {
+      var stickyCurId = parseInt(config.currentId, 10) || 0;
+      var stickyAllowed = false;
+      var stickyIds = Array.isArray(config.stickyPageIds) ? config.stickyPageIds : [];
+      for (var si = 0; si < stickyIds.length; si++) {
+        if (parseInt(stickyIds[si], 10) === stickyCurId) { stickyAllowed = true; break; }
+      }
+      if (!stickyAllowed) return;
+    }
+
     var timings = config.stickyTimings;
     if (!timings || !timings.Fajr || !timings.Maghrib) return;
 
@@ -1170,8 +1192,6 @@
     collapseBtn.innerHTML = '\u203A';
     bar.insertBefore(collapseBtn, bar.firstChild);
 
-    document.body.appendChild(bar);
-
     /* ── Roll tab element (visible at right edge when rolled) ── */
     var tabEl = document.createElement("div");
     tabEl.className = "bk-sbar-roll-tab";
@@ -1187,21 +1207,59 @@
     bar.appendChild(tabEl);
 
     /* ── Roll / Unroll behaviour ── */
-    var INIT_DELAY = 10000;  /* ms before first auto-roll */
-    var HOVER_SHOW = 10000;  /* ms to stay open on hover / tap */
+    var OPEN_MIN_DELAY = 5000;          /* auto-open delay min */
+    var OPEN_MAX_DELAY = 7000;          /* auto-open delay max */
+    var AUTO_ROLL_AFTER_OPEN = 10000;   /* roll back after first open */
+    var HOVER_SHOW = 10000;             /* ms to stay open on hover / tap */
     var rollTimer  = null;
+    var moodTimer  = null;
 
-    function rollBar()  { bar.classList.add("bk-rolled"); }
+    function resetMoodState() {
+      if (moodTimer) {
+        clearTimeout(moodTimer);
+        moodTimer = null;
+      }
+      bar.classList.remove("bk-is-collapsing", "bk-is-expanding");
+    }
+
+    function rollBar() {
+      resetMoodState();
+      bar.classList.add("bk-is-collapsing");
+      requestAnimationFrame(function () {
+        bar.classList.add("bk-rolled");
+      });
+      moodTimer = setTimeout(resetMoodState, 950);
+    }
     function unrollBar() {
       clearTimeout(rollTimer);
-      bar.classList.remove("bk-rolled");
+      resetMoodState();
+      bar.classList.add("bk-is-expanding");
+      requestAnimationFrame(function () {
+        bar.classList.remove("bk-rolled");
+      });
+      moodTimer = setTimeout(resetMoodState, 1100);
     }
     function scheduleRoll(ms) {
       clearTimeout(rollTimer);
       rollTimer = setTimeout(rollBar, ms);
     }
 
-    scheduleRoll(INIT_DELAY);
+    /* Show collapsed immediately at right edge */
+    bar.classList.add("bk-rolled");
+    document.body.appendChild(bar);
+
+    if (config.stickyPos === "header") {
+      document.body.style.paddingTop = (parseFloat(document.body.style.paddingTop || 0) + 60) + "px";
+    } else {
+      document.body.style.paddingBottom = (parseFloat(document.body.style.paddingBottom || 0) + 60) + "px";
+    }
+
+    /* Auto-open after 5-7 seconds */
+    var firstOpenDelay = OPEN_MIN_DELAY + Math.floor(Math.random() * (OPEN_MAX_DELAY - OPEN_MIN_DELAY + 1));
+    setTimeout(function () {
+      unrollBar();
+      scheduleRoll(AUTO_ROLL_AFTER_OPEN);
+    }, firstOpenDelay);
 
     bar.addEventListener("mouseenter", function () {
       unrollBar();
@@ -1222,13 +1280,6 @@
       e.stopPropagation();
       rollBar();
     });
-
-    /* Push body content so bar doesn't overlap */
-    if (config.stickyPos === "header") {
-      document.body.style.paddingTop = (parseFloat(document.body.style.paddingTop || 0) + 60) + "px";
-    } else {
-      document.body.style.paddingBottom = (parseFloat(document.body.style.paddingBottom || 0) + 60) + "px";
-    }
   }
 
   function bootBarakah() {

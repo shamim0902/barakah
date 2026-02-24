@@ -1,4 +1,4 @@
-=== Barakah – Ramadan Prayer Times ===
+=== Barakah - Ramadan Prayer Times ===
 Contributors: barakahteam
 Tags: ramadan, prayer times, islamic, salah, iftar, sehri, muslim
 Requires at least: 5.5
@@ -6,65 +6,88 @@ Tested up to: 6.7
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPL-2.0+
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-A beautiful dark-themed Ramadan prayer times widget powered by the Aladhan API.
-Use [barakah] shortcode on any page or post.
+A Ramadan prayer times plugin with shortcode widget, greeting popup, and sticky prayer bar.
 
 == Description ==
 
-Barakah displays a fully responsive, animated prayer times widget featuring:
+Barakah provides a complete Ramadan experience for WordPress sites:
 
-* Live countdown to the next prayer (Fajr, Dhuhr, Asr, Maghrib, Isha)
-* Prominent Sehri & Iftar time cards
-* Full daily prayer timetable with active prayer highlighted
-* Animated twinkling star background
-* Rotating Dua / Dhikr section (8 authentic duas)
-* Dua at Iftar and Niyyah for Sehri
-* Hijri date display
-* Powered by the free Aladhan API — no API key required
+* Prayer times widget via shortcode
+* Live countdown to next prayer
+* Sehri and Iftar cards
+* Ramadan month modal (Hijri calendar style)
+* Daily dua/zikr rotation (with Bangla support)
+* Greeting popup with page targeting
+* Sticky prayer bar with page targeting
+* Dark/light sticky bar themes
+* Hijri date and caution-minute adjustments
+* Onboarding wizard for first setup
+* Server-side caching with configurable cache duration (default: 2 hours)
+
+Powered by the free Aladhan API (no API key required).
 
 == Installation ==
 
 1. Upload the `barakah` folder to `/wp-content/plugins/`
-2. Activate the plugin via **Plugins → Installed Plugins**
-3. Go to **Barakah** in the admin sidebar and configure your city, country, and calculation method
-4. Add [barakah] to any page, post, or widget
+2. Activate the plugin in **Plugins**
+3. Open **Barakah** settings in wp-admin
+4. Add shortcode on any page/post:
 
-== Shortcode Usage ==
+`[barakah]`
 
-Basic (uses admin settings):
-  [barakah]
+== Frequently Asked Questions ==
 
-Override city & country inline:
-  [barakah city="London" country="UK"]
+= How do I show the widget? =
+Use `[barakah]` on any page or post.
 
-Override everything:
-  [barakah city="Istanbul" country="Turkey" method="13"]
+= Can I set city/country per page? =
+Yes:
+`[barakah city="London" country="UK"]`
 
-== Calculation Methods ==
+= Can I choose light mode for one shortcode? =
+Yes:
+`[barakah mode="light"]`
 
-1  – Muslim World League
-2  – Islamic Society of North America (ISNA)
-3  – Egyptian General Authority of Survey
-4  – Umm Al-Qura University, Makkah
-5  – University of Islamic Sciences, Karachi
-7  – Institute of Geophysics, Tehran
-8  – Gulf Region
-9  – Kuwait
-10 – Qatar
-11 – Singapore
-12 – Union Organization Islamic de France
-13 – Diyanet İşleri Başkanlığı, Turkey
-14 – Spiritual Administration of Muslims of Russia
-15 – Moonsighting Committee Worldwide
+= How do popup/sticky page targeting work? =
+In plugin settings, choose **All pages** or **Specific pages only**, then select pages.
+
+= Does it need an API key? =
+No. It uses Aladhan public endpoints.
+
+= Why are times not updating instantly? =
+Times are cached using transients. Reduce cache hours in settings if needed.
+
+== Shortcode ==
+
+Basic:
+`[barakah]`
+
+City/Country override:
+`[barakah city="Istanbul" country="Turkey"]`
+
+Method override:
+`[barakah city="Istanbul" country="Turkey" method="13"]`
+
+Mode override:
+`[barakah mode="dark"]`
+`[barakah mode="light"]`
 
 == Changelog ==
 
 = 1.0.0 =
-* Initial release
+* Added tabbed settings UI and onboarding wizard improvements
+* Added greeting popup page targeting
+* Added sticky bar page targeting
+* Added sticky delayed-open and enhanced collapse/expand transitions
+* Set sticky theme default to dark for new installs
+* Changed default cache duration to 2 hours
+* Hardened frontend escaping for API-derived values
+* Prevented duplicated dua rotation intervals
+* Updated documentation
 
-== Notes ==
+== Upgrade Notice ==
 
-Prayer times are fetched client-side from https://api.aladhan.com.
-The site must be able to reach this API. No API key is required.
-Times are displayed in the local time of the configured city.
+= 1.0.0 =
+Initial public release.

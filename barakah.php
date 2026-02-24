@@ -3,7 +3,7 @@
  * Plugin Name:  Barakah – Ramadan Prayer Times
  * Plugin URI:   https://github.com/shamim0902/barakah
  * Description:  A beautiful Ramadan prayer-times widget. Use [barakah] on any page or post.
- * Version: 1.0.6
+ * Version: 1.0.0
  * Author:  Hasanuzzaman
  * License:      GPL-2.0+
  * Text Domain:  barakah
@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'BARAKAH_VERSION',     '1.0.5' );
+define( 'BARAKAH_VERSION',     '1.0.0' );
 define( 'BARAKAH_PLUGIN_URL',  plugin_dir_url( __FILE__ ) );
 define( 'BARAKAH_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 
@@ -45,6 +45,8 @@ function barakah_enqueue_frontend_assets() {
     // Global greeting popup config — available on every page
     $popup_page_ids_raw = get_option( 'barakah_greeting_popup_page_ids', '' );
     $popup_page_ids     = array_values( array_filter( array_map( 'absint', explode( ',', $popup_page_ids_raw ) ) ) );
+    $sticky_page_ids_raw = get_option( 'barakah_sticky_page_ids', '' );
+    $sticky_page_ids     = array_values( array_filter( array_map( 'absint', explode( ',', $sticky_page_ids_raw ) ) ) );
 
     // Fetch prayer times for sticky bar (cached via transients)
     $sticky_timings = [];
@@ -69,6 +71,8 @@ function barakah_enqueue_frontend_assets() {
         'pageIds'        => $popup_page_ids,
         'currentId'      => (int) get_queried_object_id(),
         'stickyBar'      => get_option( 'barakah_sticky_bar', '0' ),
+        'stickyScope'    => get_option( 'barakah_sticky_scope', 'all' ),
+        'stickyPageIds'  => $sticky_page_ids,
         'stickyPos'      => get_option( 'barakah_sticky_position', 'footer' ),
         'stickyGreeting' => get_option( 'barakah_sticky_greeting', 'Ramadan Mubarak! 🌙' ),
         'stickyTimings'  => $sticky_timings,
@@ -87,11 +91,12 @@ function barakah_activate() {
         'barakah_city'                 => 'Dhaka',
         'barakah_country'              => 'Bangladesh',
         'barakah_method'               => '1',
-        'barakah_cache_hours'          => 6,
+        'barakah_cache_hours'          => 2,
         'barakah_hijri_adjust_direction'  => 'none',
         'barakah_hijri_adjust_days'      => 0,
         'barakah_sehri_caution_minutes'  => 0,
         'barakah_iftar_caution_minutes'  => 0,
+        'barakah_sticky_theme'           => 'dark',
     ];
     foreach ( $defaults as $key => $value ) {
         if ( get_option( $key ) === false ) {
