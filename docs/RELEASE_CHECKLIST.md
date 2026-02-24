@@ -72,8 +72,8 @@ Recommended visual set:
 
 ## 7) Release Operations
 
-- [x] Tag release in git (e.g. `v1.0.0`) (Created: `v1.0.0`)
-- [x] Publish GitHub release notes from changelog (Prepared: `docs/RELEASE_NOTES_1.0.0.md`)
+- [x] Tag release in git (e.g. `v1.0.1`) (Created: `v1.0.1`)
+- [x] Publish GitHub release notes from changelog (Prepared: `docs/RELEASE_NOTES_1.0.1.md`)
 - [ ] Upload plugin zip to release (Manual: GitHub UI/API)
 - [ ] If using wp.org SVN, commit trunk + tag + assets (Manual: wp.org credentials + assets)
 

@@ -6,11 +6,17 @@ It is powered by the free [Aladhan API](https://aladhan.com/prayer-times-api) (n
 
 ## Current Version
 
-`1.0.0`
+`1.0.1`
 
 ## Features
 
 - Prayer times widget via shortcode: `[barakah]`
+- New widget variants via shortcode:
+  - `[barakah widget="prayer_times"]`
+  - `[barakah widget="ramadan"]`
+  - `[barakah widget="hadith"]`
+  - `[barakah widget="dua"]`
+  - `[barakah widget="date"]`
 - Live clock and countdown to next prayer
 - Sehri and Iftar highlight cards
 - Full daily prayer list with active/next states
@@ -54,23 +60,38 @@ Use global settings:
 [barakah]
 ```
 
-Override location:
+Supported attributes:
+
+- `city` (string)
+- `country` (string)
+- `method` (number/string; Aladhan method id)
+- `mode` (`dark` or `light`)
+- `widget` (`full`, `prayer_times`, `ramadan`, `hadith`, `dua`, `date`)
+
+All available shortcode variants:
+
+```txt
+[barakah]
+[barakah widget="full"]
+[barakah widget="prayer_times"]
+[barakah widget="ramadan"]
+[barakah widget="hadith"]
+[barakah widget="dua"]
+[barakah widget="date"]
+```
+
+Common combinations:
 
 ```txt
 [barakah city="London" country="UK"]
-```
-
-Override method:
-
-```txt
 [barakah city="Istanbul" country="Turkey" method="13"]
-```
-
-Set widget mode per instance:
-
-```txt
 [barakah mode="dark"]
 [barakah mode="light"]
+[barakah widget="prayer_times" mode="light"]
+[barakah widget="ramadan" city="London" country="UK" method="2" mode="dark"]
+[barakah widget="hadith" mode="light"]
+[barakah widget="dua" mode="dark"]
+[barakah widget="date" city="Dhaka" country="Bangladesh"]
 ```
 
 ## Admin Settings Overview
@@ -118,6 +139,16 @@ barakah/
 ```
 
 ## Changelog
+
+### 1.0.1
+
+- Added five new shortcode widget variants:
+  - `prayer_times` (full day prayer table)
+  - `ramadan` (Sehri/Iftar essentials)
+  - `hadith` (random hadith from API + fallback)
+  - `dua` (random daily dua)
+  - `date` (Islamic date + next prayer)
+- Added compact widget card/table styles for dark and light modes
 
 ### 1.0.0
 

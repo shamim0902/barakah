@@ -137,6 +137,119 @@ class Barakah_API {
 	}
 
 	/**
+	 * Fetch a random hadith from public APIs with local fallback.
+	 *
+	 * @return array{ text: string, source: string, narrator: string, reference: string }
+	 */
+	public function get_random_hadith() {
+		$cache_key = 'barakah_hadith_' . gmdate( 'YmdH' );
+		$cached    = get_transient( $cache_key );
+		if ( is_array( $cached ) && ! empty( $cached['text'] ) ) {
+			return $cached;
+		}
+
+		$endpoints = array(
+			'https://hadeethenc.com/api/v1/hadeeths/one/?language=en',
+			'https://hadeethenc.com/api/v1/hadeeths/one/?language=bn',
+		);
+
+		foreach ( $endpoints as $url ) {
+			$response = wp_remote_get(
+				$url,
+				array(
+					'timeout'   => 12,
+					'sslverify' => true,
+				)
+			);
+
+			if ( is_wp_error( $response ) ) {
+				continue;
+			}
+
+			$code = wp_remote_retrieve_response_code( $response );
+			$body = wp_remote_retrieve_body( $response );
+			$json = json_decode( $body, true );
+
+			if ( 200 !== $code || ! is_array( $json ) ) {
+				continue;
+			}
+
+			$hadith = $this->normalize_hadith_payload( $json );
+			if ( ! empty( $hadith['text'] ) ) {
+				set_transient( $cache_key, $hadith, HOUR_IN_SECONDS );
+				return $hadith;
+			}
+		}
+
+		$fallbacks = array(
+			array(
+				'text'      => 'Actions are judged by intentions, and every person will get the reward according to what he intended.',
+				'source'    => 'Sahih al-Bukhari',
+				'narrator'  => 'Umar ibn Al-Khattab (RA)',
+				'reference' => 'Hadith 1',
+			),
+			array(
+				'text'      => 'The best among you are those who learn the Quran and teach it.',
+				'source'    => 'Sahih al-Bukhari',
+				'narrator'  => 'Uthman ibn Affan (RA)',
+				'reference' => 'Hadith 5027',
+			),
+			array(
+				'text'      => 'Allah does not look at your appearance or wealth, but rather He looks at your hearts and deeds.',
+				'source'    => 'Sahih Muslim',
+				'narrator'  => 'Abu Hurairah (RA)',
+				'reference' => 'Hadith 2564',
+			),
+		);
+
+		$hadith = $fallbacks[ array_rand( $fallbacks ) ];
+		set_transient( $cache_key, $hadith, HOUR_IN_SECONDS );
+		return $hadith;
+	}
+
+	/**
+	 * Normalize hadith payload from external APIs.
+	 *
+	 * @param array $payload Raw payload.
+	 * @return array{ text: string, source: string, narrator: string, reference: string }
+	 */
+	private function normalize_hadith_payload( $payload ) {
+		$text      = '';
+		$source    = '';
+		$narrator  = '';
+		$reference = '';
+
+		if ( isset( $payload['hadeeth'] ) ) {
+			$text      = is_string( $payload['hadeeth'] ) ? $payload['hadeeth'] : '';
+			$source    = isset( $payload['book'] ) && is_string( $payload['book'] ) ? $payload['book'] : '';
+			$narrator  = isset( $payload['attribution'] ) && is_string( $payload['attribution'] ) ? $payload['attribution'] : '';
+			$reference = isset( $payload['id'] ) ? (string) $payload['id'] : '';
+		}
+
+		if ( empty( $text ) && isset( $payload['data'] ) && is_array( $payload['data'] ) ) {
+			$data = $payload['data'];
+			$text = isset( $data['hadeeth'] ) && is_string( $data['hadeeth'] ) ? $data['hadeeth'] : $text;
+			$text = isset( $data['hadith_english'] ) && is_string( $data['hadith_english'] ) ? $data['hadith_english'] : $text;
+
+			$source = isset( $data['book'] ) && is_string( $data['book'] ) ? $data['book'] : $source;
+			$source = isset( $data['source'] ) && is_string( $data['source'] ) ? $data['source'] : $source;
+
+			$narrator = isset( $data['attribution'] ) && is_string( $data['attribution'] ) ? $data['attribution'] : $narrator;
+			$narrator = isset( $data['narrator'] ) && is_string( $data['narrator'] ) ? $data['narrator'] : $narrator;
+
+			$reference = isset( $data['id'] ) ? (string) $data['id'] : $reference;
+			$reference = isset( $data['reference'] ) && is_string( $data['reference'] ) ? $data['reference'] : $reference;
+		}
+
+		return array(
+			'text'      => trim( wp_strip_all_tags( (string) $text ) ),
+			'source'    => trim( wp_strip_all_tags( (string) $source ) ),
+			'narrator'  => trim( wp_strip_all_tags( (string) $narrator ) ),
+			'reference' => trim( wp_strip_all_tags( (string) $reference ) ),
+		);
+	}
+
+	/**
 	 * Flush all Barakah transients (on settings change or deactivation).
 	 */
 	public static function flush_cache() {
